@@ -1,13 +1,29 @@
 RewriteEngine On
 
-# Принудительно использовать HTTPS
-RewriteCond %{HTTPS} off
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-# Отключаем автоматические CORS заголовки на уровне сервера
+# Remove all CORS headers that might have been set
 Header unset Access-Control-Allow-Origin
 Header unset Access-Control-Allow-Methods
 Header unset Access-Control-Allow-Headers
+Header unset Access-Control-Allow-Credentials
+
+# Set CORS headers
+Header always set Access-Control-Allow-Origin "http://localhost"
+Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+Header always set Access-Control-Allow-Credentials "true"
+
+# Authentication routes
+RewriteRule ^auth/login$ routes/auth/login.php [L]
+RewriteRule ^auth/register$ routes/auth/register.php [L]
+
+# Allow access to images and files
+RewriteRule ^images/(.*)$ images/$1 [L]
+RewriteRule ^files/(.*)$ files/$1 [L]
+
+# Force HTTPS only if not localhost
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP_HOST} !^localhost [NC]
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Маршрутизация API запросов
 RewriteCond %{REQUEST_FILENAME} !-f
