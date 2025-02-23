@@ -1,9 +1,10 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { login } from '../api/auth';
 import { LoginCredentials, AuthResponse } from '../types/auth';
+import styles from '../styles/auth.module.css';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -12,9 +13,7 @@ export const Login: React.FC = () => {
     const loginMutation = useMutation({
         mutationFn: login,
         onSuccess: (data: AuthResponse) => {
-            // Save token to localStorage
             localStorage.setItem('token', data.token);
-            // Redirect to main page
             navigate('/');
         },
     });
@@ -24,51 +23,91 @@ export const Login: React.FC = () => {
     };
 
     return (
-        <div className="auth-container">
-            <h1>Вход</h1>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="form-group">
-                    <label>Никнейм</label>
-                    <input
-                        type="text"
-                        {...register('nickname', { required: 'Обязательное поле' })}
-                    />
-                    {errors.nickname && <span className="error">{errors.nickname.message}</span>}
+        <div className={styles.container}>
+            <div className={styles.auth_container}>
+                <div className={styles.auth_header}>
+                    <h1>Добро пожаловать</h1>
+                    <p>Войдите в свой аккаунт Telekrab</p>
                 </div>
 
-                <div className="form-group">
-                    <label>Пароль</label>
-                    <input
-                        type="password"
-                        {...register('password', { required: 'Обязательное поле' })}
-                    />
-                    {errors.password && <span className="error">{errors.password.message}</span>}
-                </div>
-
-                <div className="form-group">
-                    <label className="checkbox-label">
-                        <input
-                            type="checkbox"
-                            {...register('rememberMe')}
-                        />
-                        Запомнить меня
-                    </label>
-                </div>
-
-                <button type="submit" disabled={loginMutation.isPending}>
-                    {loginMutation.isPending ? 'Вход...' : 'Войти'}
-                </button>
-
-                {loginMutation.isError && (
-                    <div className="error-message">
-                        Ошибка при входе. Пожалуйста, проверьте введенные данные.
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div className={styles.form_group}>
+                        <div className={styles.input_group}>
+                            <input
+                                type="text"
+                                placeholder="Никнейм"
+                                className={errors.nickname ? styles.error_input : ''}
+                                {...register('nickname', { 
+                                    required: 'Введите никнейм',
+                                    minLength: {
+                                        value: 3,
+                                        message: 'Никнейм должен содержать минимум 3 символа'
+                                    }
+                                })}
+                            />
+                        </div>
+                        {errors.nickname && (
+                            <span className={styles.error_text}>{errors.nickname.message}</span>
+                        )}
                     </div>
-                )}
-            </form>
 
-            <div className="auth-links">
-                <a href="/register">Ещё нет аккаунта? Зарегистрироваться</a>
-                <a href="/restore">Забыли пароль?</a>
+                    <div className={styles.form_group}>
+                        <div className={styles.input_group}>
+                            <input
+                                type="password"
+                                placeholder="Пароль"
+                                className={errors.password ? styles.error_input : ''}
+                                {...register('password', { 
+                                    required: 'Введите пароль',
+                                    minLength: {
+                                        value: 6,
+                                        message: 'Пароль должен содержать минимум 6 символов'
+                                    }
+                                })}
+                            />
+                            <span className={styles.input_icon}>🔒</span>
+                        </div>
+                        {errors.password && (
+                            <span className={styles.error_text}>{errors.password.message}</span>
+                        )}
+                    </div>
+
+                    <div className={styles.form_options}>
+                        <label className={styles.checkbox_label}>
+                            <input
+                                type="checkbox"
+                                {...register('rememberMe')}
+                            />
+                            <span>Запомнить меня</span>
+                        </label>
+                        <Link to="/restore" className={styles.forgot_password}>
+                            Забыли пароль?
+                        </Link>
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        className={styles.submit_button}
+                        disabled={loginMutation.isPending}
+                    >
+                        {loginMutation.isPending ? (
+                            <span className={styles.loading_spinner}>⌛</span>
+                        ) : 'Войти'}
+                    </button>
+
+                    {loginMutation.isError && (
+                        <div className={styles.error_message}>
+                            Неверный никнейм или пароль
+                        </div>
+                    )}
+                </form>
+
+                <div className={styles.auth_footer}>
+                    <p>Нет аккаунта?</p>
+                    <Link to="/register" className={styles.register_link}>
+                        Зарегистрироваться
+                    </Link>
+                </div>
             </div>
         </div>
     );

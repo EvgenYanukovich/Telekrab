@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { register as registerUser } from '../api/auth';
 import { RegisterCredentials } from '../types/auth';
+import styles from '../styles/auth.module.css';
 
 export const Register: React.FC = () => {
     const navigate = useNavigate();
@@ -23,34 +24,26 @@ export const Register: React.FC = () => {
     });
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        console.log('handleImageChange called');
         const file = event.target.files?.[0];
         if (file) {
-            console.log('File in handleImageChange:', file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreviewUrl(reader.result as string);
             };
             reader.readAsDataURL(file);
-            
-            // Устанавливаем файл в форму
             setValue('avatar', file);
         }
     };
 
     const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
-        console.log('handleDrop called');
         const file = event.dataTransfer.files?.[0];
         if (file && file.type.startsWith('image/')) {
-            console.log('File in handleDrop:', file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreviewUrl(reader.result as string);
             };
             reader.readAsDataURL(file);
-            
-            // Устанавливаем файл в форму
             setValue('avatar', file);
         }
     };
@@ -59,8 +52,12 @@ export const Register: React.FC = () => {
         event.preventDefault();
     };
 
+    const removeAvatar = () => {
+        setPreviewUrl(null);
+        setValue('avatar', undefined);
+    };
+
     const onSubmit = (data: RegisterCredentials) => {
-        console.log('Form data before submit:', data);
         if (data.password !== data.confirmPassword) {
             setError('confirmPassword', { message: 'Пароли не совпадают' });
             return;
@@ -69,158 +66,169 @@ export const Register: React.FC = () => {
     };
 
     return (
-        <div className="auth-container">
-            <h1>Регистрация</h1>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="avatar-upload">
-                    <div 
-                        className="avatar-preview" 
-                        style={{ 
-                            backgroundImage: previewUrl ? `url(${previewUrl})` : 'none',
-                            border: '2px dashed #666',
-                            borderRadius: '8px',
-                            width: '120px',
-                            height: '120px',
-                            marginBottom: '20px',
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative'
-                        }}
-                        onDrop={handleDrop}
-                        onDragOver={handleDragOver}
-                        onClick={() => {
-                            const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-                            if (fileInput) {
-                                fileInput.click();
-                            }
-                        }}
-                    >
-                        {!previewUrl && (
-                            <div style={{ textAlign: 'center', color: '#666' }}>
-                                <p>Перетащите фото или кликните для выбора</p>
-                            </div>
+        <div className={styles.container}>
+            <div className={styles.auth_container}>
+                <div className={styles.auth_header}>
+                    <h1>Создайте аккаунт</h1>
+                    <p>Присоединяйтесь к Telekrab</p>
+                </div>
+
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div className={styles.avatar_section}>
+                        <div 
+                            className={`${styles.avatar_upload} ${previewUrl ? styles.has_image : ''}`}
+                            onClick={() => document.getElementById('avatar-input')?.click()}
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                        >
+                            {previewUrl ? (
+                                <>
+                                    <img src={previewUrl} alt="Avatar preview" />
+                                    <div className={styles.avatar_overlay}>
+                                        <span>Изменить фото</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className={styles.avatar_placeholder}>
+                                    <span className={styles.avatar_icon}>📷</span>
+                                    <span>Добавьте фото</span>
+                                    <span className={styles.avatar_hint}>Перетащите или кликните</span>
+                                </div>
+                            )}
+                        </div>
+                        {previewUrl && (
+                            <button 
+                                type="button" 
+                                className={styles.remove_avatar}
+                                onClick={removeAvatar}
+                            >
+                                Удалить фото
+                            </button>
                         )}
                         <input
+                            id="avatar-input"
                             type="file"
                             accept="image/*"
                             style={{ display: 'none' }}
-                            {...register('avatar', {
-                                onChange: (e) => {
-                                    console.log('File input onChange');
-                                    handleImageChange(e);
-                                }
-                            })}
+                            {...register('avatar')}
+                            onChange={handleImageChange}
                         />
                     </div>
-                    {previewUrl && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setPreviewUrl(null);
-                                const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-                                if (fileInput) {
-                                    fileInput.value = '';
-                                    // Вызываем событие change для react-hook-form
-                                    const event = new Event('change', { bubbles: true });
-                                    fileInput.dispatchEvent(event);
-                                }
-                            }}
-                            style={{
-                                marginBottom: '20px',
-                                padding: '8px 16px',
-                                backgroundColor: '#dc3545',
-                                border: 'none',
-                                borderRadius: '4px',
-                                color: 'white',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Удалить фото
-                        </button>
-                    )}
-                </div>
 
-                <div className="form-group">
-                    <label>Никнейм</label>
-                    <input
-                        type="text"
-                        {...register('nickname', { 
-                            required: 'Обязательное поле',
-                            minLength: { value: 3, message: 'Минимум 3 символа' }
-                        })}
-                    />
-                    {errors.nickname && <span className="error">{errors.nickname.message}</span>}
-                </div>
-
-                <div className="form-group">
-                    <label>Пароль</label>
-                    <input
-                        type="password"
-                        {...register('password', { 
-                            required: 'Обязательное поле',
-                            minLength: { value: 6, message: 'Минимум 6 символов' }
-                        })}
-                    />
-                    {errors.password && <span className="error">{errors.password.message}</span>}
-                </div>
-
-                <div className="form-group">
-                    <label>Повторите пароль</label>
-                    <input
-                        type="password"
-                        {...register('confirmPassword', {
-                            required: 'Обязательное поле',
-                            validate: (value) => value === watch('password') || 'Пароли не совпадают'
-                        })}
-                    />
-                    {errors.confirmPassword && <span className="error">{errors.confirmPassword.message}</span>}
-                </div>
-
-                <div className="form-group">
-                    <label>Дата рождения</label>
-                    <input
-                        type="date"
-                        {...register('birthDate', { required: 'Обязательное поле' })}
-                    />
-                    {errors.birthDate && <span className="error">{errors.birthDate.message}</span>}
-                </div>
-
-                <div className="form-group">
-                    <label>О себе</label>
-                    <textarea
-                        {...register('bio')}
-                        placeholder="Расскажите о себе..."
-                        style={{
-                            width: '100%',
-                            padding: '10px',
-                            backgroundColor: '#1c1c1c',
-                            border: '1px solid #454545',
-                            borderRadius: '4px',
-                            color: 'white',
-                            resize: 'vertical',
-                            minHeight: '100px'
-                        }}
-                    />
-                </div>
-
-                <button type="submit" disabled={registerMutation.isPending}>
-                    {registerMutation.isPending ? 'Регистрация...' : 'Регистрация'}
-                </button>
-
-                {errors.root && (
-                    <div className="error-message">
-                        {errors.root.message}
+                    <div className={styles.form_group}>
+                        <div className={styles.input_group}>
+                            <input
+                                type="text"
+                                placeholder="Никнейм"
+                                className={errors.nickname ? styles.error_input : ''}
+                                {...register('nickname', { 
+                                    required: 'Введите никнейм',
+                                    minLength: {
+                                        value: 3,
+                                        message: 'Никнейм должен содержать минимум 3 символа'
+                                    }
+                                })}
+                            />
+                            <span className={styles.input_icon}>👤</span>
+                        </div>
+                        {errors.nickname && (
+                            <span className={styles.error_text}>{errors.nickname.message}</span>
+                        )}
                     </div>
-                )}
-            </form>
 
-            <div className="auth-links">
-                <a href="/login">Уже есть аккаунт? Войти</a>
+                    <div className={styles.form_group}>
+                        <div className={styles.input_group}>
+                            <input
+                                type="password"
+                                placeholder="Пароль"
+                                className={errors.password ? styles.error_input : ''}
+                                {...register('password', { 
+                                    required: 'Введите пароль',
+                                    minLength: {
+                                        value: 6,
+                                        message: 'Пароль должен содержать минимум 6 символов'
+                                    }
+                                })}
+                            />
+                            <span className={styles.input_icon}>🔒</span>
+                        </div>
+                        {errors.password && (
+                            <span className={styles.error_text}>{errors.password.message}</span>
+                        )}
+                    </div>
+
+                    <div className={styles.form_group}>
+                        <div className={styles.input_group}>
+                            <input
+                                type="password"
+                                placeholder="Подтвердите пароль"
+                                className={errors.confirmPassword ? styles.error_input : ''}
+                                {...register('confirmPassword', {
+                                    required: 'Подтвердите пароль',
+                                    validate: (value) => 
+                                        value === watch('password') || 'Пароли не совпадают'
+                                })}
+                            />
+                            <span className={styles.input_icon}>🔒</span>
+                        </div>
+                        {errors.confirmPassword && (
+                            <span className={styles.error_text}>{errors.confirmPassword.message}</span>
+                        )}
+                    </div>
+
+                    <div className={styles.form_group}>
+                        <div className={styles.input_group}>
+                            <input
+                                type="date"
+                                placeholder="Дата рождения"
+                                className={errors.birthDate ? styles.error_input : ''}
+                                {...register('birthDate', { 
+                                    required: 'Укажите дату рождения'
+                                })}
+                            />
+                            <span className={styles.input_icon}>📅</span>
+                        </div>
+                        {errors.birthDate && (
+                            <span className={styles.error_text}>{errors.birthDate.message}</span>
+                        )}
+                    </div>
+
+                    <div className={styles.form_group}>
+                        <div className={styles.input_group}>
+                            <textarea
+                                placeholder="О себе (необязательно)"
+                                className={errors.bio ? styles.error_input : ''}
+                                {...register('bio')}
+                            />
+                        </div>
+                        {errors.bio && (
+                            <span className={styles.error_text}>{errors.bio.message}</span>
+                        )}
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        className={styles.submit_button}
+                        disabled={registerMutation.isPending}
+                    >
+                        {registerMutation.isPending ? (
+                            <span className={styles.loading_spinner}>⌛</span>
+                        ) : 'Зарегистрироваться'}
+                    </button>
+
+                    {registerMutation.isError && (
+                        <div className={styles.error_message}>
+                            {errors.root?.message || 'Ошибка при регистрации'}
+                        </div>
+                    )}
+                </form>
+
+                <div className={styles.auth_footer}>
+                    <p>Уже есть аккаунт?</p>
+                    <Link to="/login" className={styles.register_link}>
+                        Войти
+                    </Link>
+                </div>
             </div>
         </div>
     );
