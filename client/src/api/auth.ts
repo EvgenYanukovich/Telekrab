@@ -18,7 +18,7 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
     }
 };
 
-export const register = async (credentials: RegisterCredentials): Promise<void> => {
+export const register = async (credentials: RegisterCredentials): Promise<AuthResponse> => {
     try {
         const formData = new FormData();
         
@@ -44,13 +44,15 @@ export const register = async (credentials: RegisterCredentials): Promise<void> 
             }
         });
 
-        await axiosInstance.post('/auth/register', formData, {
+        const response = await axiosInstance.post<AuthResponse>('/auth/register', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
+
+        return response.data;
     } catch (error) {
-        console.error('Register error:', error);
+        console.error('Registration error:', error);
         throw error;
     }
 };

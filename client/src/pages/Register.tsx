@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
 import { register as registerUser } from '../api/auth';
 import { RegisterCredentials } from '../types/auth';
-import { ValidationHints } from '../components/ValidationHints';
 import { DatePicker } from '../components/DatePicker';
+import { ValidationHints } from '../components/ValidationHints';
 import styles from '../styles/auth.module.css';
+import { useAuth } from '../hooks/useAuth';
 
 export const Register: React.FC = () => {
     const navigate = useNavigate();
+    const { setUser } = useAuth();
     const [focusedField, setFocusedField] = useState<string | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const { register, handleSubmit, watch, formState: { errors }, setError, setValue, trigger } = useForm<RegisterCredentials>();
     const watchedPassword = watch('password');
     const watchedNickname = watch('nickname');
@@ -20,8 +22,10 @@ export const Register: React.FC = () => {
 
     const registerMutation = useMutation({
         mutationFn: registerUser,
-        onSuccess: () => {
-            navigate('/login');
+        onSuccess: (data) => {
+            localStorage.setItem('token', data.token);
+            setUser(data.user);
+            navigate('/home');
         },
         onError: (error: any) => {
             if (error.response?.data?.error) {
@@ -87,7 +91,7 @@ export const Register: React.FC = () => {
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setPreviewUrl(reader.result as string);
+                setAvatarPreview(reader.result as string);
             };
             reader.readAsDataURL(file);
             setValue('avatar', file);
@@ -100,7 +104,7 @@ export const Register: React.FC = () => {
         if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setPreviewUrl(reader.result as string);
+                setAvatarPreview(reader.result as string);
             };
             reader.readAsDataURL(file);
             setValue('avatar', file);
@@ -112,7 +116,7 @@ export const Register: React.FC = () => {
     };
 
     const removeAvatar = () => {
-        setPreviewUrl(null);
+        setAvatarPreview(null);
         setValue('avatar', undefined);
     };
 
@@ -136,14 +140,14 @@ export const Register: React.FC = () => {
                     <div className={styles.form_group_with_avatar}>
                         <div className={styles.avatar_section}>
                             <div
-                                className={`${styles.avatar_upload} ${previewUrl ? styles.has_image : ''}`}
+                                className={`${styles.avatar_upload} ${avatarPreview ? styles.has_image : ''}`}
                                 onClick={() => document.getElementById('avatar-input')?.click()}
                                 onDrop={handleDrop}
                                 onDragOver={handleDragOver}
                             >
-                                {previewUrl ? (
+                                {avatarPreview ? (
                                     <>
-                                        <img src={previewUrl} alt="Avatar preview" />
+                                        <img src={avatarPreview} alt="Avatar preview" />
                                         <div className={styles.avatar_overlay}>
                                             <span>Изменить<br />фото</span>
                                         </div>
@@ -156,7 +160,7 @@ export const Register: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                            {previewUrl && (
+                            {avatarPreview && (
                                 <button
                                     type="button"
                                     className={styles.remove_avatar}

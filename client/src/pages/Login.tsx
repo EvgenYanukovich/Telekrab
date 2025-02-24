@@ -5,16 +5,19 @@ import { useMutation } from '@tanstack/react-query';
 import { login } from '../api/auth';
 import { LoginCredentials, AuthResponse } from '../types/auth';
 import styles from '../styles/auth.module.css';
+import { useAuth } from '../hooks/useAuth';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
+    const { setUser } = useAuth();
     const { register, handleSubmit, formState: { errors } } = useForm<LoginCredentials>();
 
     const loginMutation = useMutation({
         mutationFn: login,
         onSuccess: (data: AuthResponse) => {
             localStorage.setItem('token', data.token);
-            navigate('/');
+            setUser(data.user);
+            navigate('/home');
         },
     });
 
