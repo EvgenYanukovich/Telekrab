@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
 import { register as registerUser } from '../api/auth';
 import { RegisterCredentials } from '../types/auth';
-import styles from '../styles/auth.module.css';
+import { ValidationHints } from '../components/ValidationHints';
 import { DatePicker } from '../components/DatePicker';
+import styles from '../styles/auth.module.css';
 
 export const Register: React.FC = () => {
     const navigate = useNavigate();
+    const [focusedField, setFocusedField] = useState<string | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const { register, handleSubmit, watch, formState: { errors }, setError, setValue, trigger } = useForm<RegisterCredentials>();
+    const watchedPassword = watch('password');
+    const watchedNickname = watch('nickname');
+    const watchedConfirmPassword = watch('confirmPassword');
+    const watchedBirthDate = watch('birthDate');
 
     const registerMutation = useMutation({
         mutationFn: registerUser,
@@ -21,8 +27,60 @@ export const Register: React.FC = () => {
             if (error.response?.data?.error) {
                 setError('root', { message: error.response.data.error });
             }
-        },
+        }
     });
+
+    const validateAge = (date: string) => {
+        const birthDate = new Date(date);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            return age - 1;
+        }
+        return age;
+    };
+
+    const getNicknameRules = () => [
+        {
+            message: 'Минимум 3 символа',
+            isValid: !!watchedNickname && watchedNickname.length >= 3
+        }
+    ];
+
+    const getPasswordRules = () => [
+        {
+            message: 'Минимум 6 символов',
+            isValid: !!watchedPassword && watchedPassword.length >= 6
+        },
+        {
+            message: 'Минимум одна заглавная буква',
+            isValid: !!watchedPassword && /[A-Z]/.test(watchedPassword)
+        },
+        {
+            message: 'Минимум одна цифра',
+            isValid: !!watchedPassword && /[0-9]/.test(watchedPassword)
+        },
+        {
+            message: 'Только латинские буквы и цифры',
+            isValid: !!watchedPassword && /^[a-zA-Z0-9]+$/.test(watchedPassword)
+        }
+    ];
+
+    const getConfirmPasswordRules = () => [
+        {
+            message: 'Пароли должны совпадать',
+            isValid: !!watchedConfirmPassword && watchedConfirmPassword === watchedPassword
+        }
+    ];
+
+    const getBirthDateRules = () => [
+        {
+            message: 'Возраст не менее 14 лет',
+            isValid: !!watchedBirthDate && validateAge(watchedBirthDate) >= 14
+        }
+    ];
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -59,8 +117,8 @@ export const Register: React.FC = () => {
     };
 
     const onSubmit = (data: RegisterCredentials) => {
-        if (data.password !== data.confirmPassword) {
-            setError('confirmPassword', { message: 'Пароли не совпадают' });
+        if (validateAge(data.birthDate) < 14) {
+            setError('birthDate', { message: 'Вам должно быть не менее 14 лет' });
             return;
         }
         registerMutation.mutate(data);
@@ -74,7 +132,7 @@ export const Register: React.FC = () => {
                     <p>Присоединяйтесь к Telekrab</p>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)} className={styles.auth_form}>
                     <div className={styles.form_group_with_avatar}>
                         <div className={styles.avatar_section}>
                             <div
@@ -87,14 +145,14 @@ export const Register: React.FC = () => {
                                     <>
                                         <img src={previewUrl} alt="Avatar preview" />
                                         <div className={styles.avatar_overlay}>
-                                            <span>Изменить<br/>фото</span>
+                                            <span>Изменить<br />фото</span>
                                         </div>
                                     </>
                                 ) : (
                                     <div className={styles.avatar_placeholder}>
                                         <div className={styles.avatar_icon}></div>
                                         <span>Добавьте фото</span>
-                                        <span className={styles.avatar_hint}>Перетащите или<br/>кликните</span>
+                                        <span className={styles.avatar_hint}>Перетащите или<br />кликните</span>
                                     </div>
                                 )}
                             </div>
@@ -127,9 +185,15 @@ export const Register: React.FC = () => {
                                             required: 'Введите никнейм',
                                             minLength: {
                                                 value: 3,
-                                                message: 'Никнейм должен содержать минимум 3 символа'
+                                                message: 'Минимум 3 символа'
                                             }
                                         })}
+                                        onFocus={() => setFocusedField('nickname')}
+                                        onBlur={() => setFocusedField(null)}
+                                    />
+                                    <ValidationHints
+                                        rules={getNicknameRules()}
+                                        show={focusedField === 'nickname'}
                                     />
                                 </div>
                                 {errors.nickname && (
@@ -145,11 +209,27 @@ export const Register: React.FC = () => {
                                         className={errors.password ? styles.error_input : ''}
                                         {...register('password', {
                                             required: 'Введите пароль',
+                                            pattern: {
+                                                value: /^[a-zA-Z0-9]+$/,
+                                                message: 'Только латинские буквы и цифры'
+                                            },
                                             minLength: {
                                                 value: 6,
-                                                message: 'Пароль должен содержать минимум 6 символов'
+                                                message: 'Минимум 6 символов'
+                                            },
+                                            validate: {
+                                                hasUpperCase: (value) =>
+                                                    /[A-Z]/.test(value) || 'Добавьте заглавную букву',
+                                                hasNumber: (value) =>
+                                                    /[0-9]/.test(value) || 'Добавьте цифру'
                                             }
                                         })}
+                                        onFocus={() => setFocusedField('password')}
+                                        onBlur={() => setFocusedField(null)}
+                                    />
+                                    <ValidationHints
+                                        rules={getPasswordRules()}
+                                        show={focusedField === 'password'}
                                     />
                                 </div>
                                 {errors.password && (
@@ -166,8 +246,14 @@ export const Register: React.FC = () => {
                                         {...register('confirmPassword', {
                                             required: 'Подтвердите пароль',
                                             validate: (value) =>
-                                                value === watch('password') || 'Пароли не совпадают'
+                                                value === watchedPassword || 'Пароли не совпадают'
                                         })}
+                                        onFocus={() => setFocusedField('confirmPassword')}
+                                        onBlur={() => setFocusedField(null)}
+                                    />
+                                    <ValidationHints
+                                        rules={getConfirmPasswordRules()}
+                                        show={focusedField === 'confirmPassword'}
                                     />
                                 </div>
                                 {errors.confirmPassword && (
@@ -176,15 +262,23 @@ export const Register: React.FC = () => {
                             </div>
                         </div>
                     </div>
-
                     <div className={styles.form_group}>
-                        <DatePicker
-                            value={watch('birthDate') || ''}
-                            onChange={(date) => setValue('birthDate', date)}
-                            placeholder="Дата рождения"
-                            error={!!errors.birthDate}
-                            onBlur={() => trigger('birthDate')}
-                        />
+                        <div className={styles.input_group}>
+                            <DatePicker
+                                value={watchedBirthDate || ''}
+                                onChange={(date) => setValue('birthDate', date)}
+                                placeholder="Дата рождения"
+                                error={!!errors.birthDate}
+                                onBlur={() => {
+                                    setFocusedField(null);
+                                    trigger('birthDate');
+                                }}
+                            />
+                            <ValidationHints
+                                rules={getBirthDateRules()}
+                                show={focusedField === 'birthDate'}
+                            />
+                        </div>
                         {errors.birthDate && (
                             <span className={styles.error_text}>{errors.birthDate.message}</span>
                         )}
@@ -194,38 +288,27 @@ export const Register: React.FC = () => {
                         <div className={styles.input_group}>
                             <textarea
                                 placeholder="О себе (необязательно)"
-                                className={errors.bio ? styles.error_input : ''}
                                 {...register('bio')}
+                                onFocus={() => setFocusedField('bio')}
+                                onBlur={() => setFocusedField(null)}
                             />
                         </div>
-                        {errors.bio && (
-                            <span className={styles.error_text}>{errors.bio.message}</span>
-                        )}
                     </div>
+
+
 
                     <button
                         type="submit"
                         className={styles.submit_button}
                         disabled={registerMutation.isPending}
                     >
-                        {registerMutation.isPending ? (
-                            <span className={styles.loading_spinner}>⌛</span>
-                        ) : 'Зарегистрироваться'}
+                        {registerMutation.isPending ? 'Регистрация...' : 'Зарегистрироваться'}
                     </button>
 
-                    {registerMutation.isError && (
-                        <div className={styles.error_message}>
-                            {errors.root?.message || 'Ошибка при регистрации'}
-                        </div>
+                    {errors.root && (
+                        <span className={styles.error_text}>{errors.root.message}</span>
                     )}
                 </form>
-
-                <div className={styles.auth_footer}>
-                    <p>Уже есть аккаунт?</p>
-                    <Link to="/login" className={styles.register_link}>
-                        Войти
-                    </Link>
-                </div>
             </div>
         </div>
     );

@@ -20,6 +20,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     const [selectedDate, setSelectedDate] = useState<Date | null>(value ? new Date(value) : null);
     const [month, setMonth] = useState(selectedDate?.getMonth() || new Date().getMonth());
     const [year, setYear] = useState(selectedDate?.getFullYear() || new Date().getFullYear());
+    const [isYearSelectOpen, setIsYearSelectOpen] = useState(false);
+    const [isMonthSelectOpen, setIsMonthSelectOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -74,6 +76,16 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         }
     };
 
+    const handleYearSelect = (selectedYear: number) => {
+        setYear(selectedYear);
+        setIsYearSelectOpen(false);
+    };
+
+    const handleMonthSelect = (selectedMonth: number) => {
+        setMonth(selectedMonth);
+        setIsMonthSelectOpen(false);
+    };
+
     const renderCalendar = () => {
         const daysInMonth = getDaysInMonth(month, year);
         const firstDay = getFirstDayOfMonth(month, year);
@@ -88,7 +100,44 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     ←
                 </button>
                 <div className={styles.month_year}>
-                    {monthNames[month]} {year}
+                    <div className={styles.selectors_container}>
+                        <div className={styles.selector}>
+                            <div onClick={() => setIsMonthSelectOpen(!isMonthSelectOpen)} className={styles.current_selection}>
+                                {monthNames[month]}
+                            </div>
+                            {isMonthSelectOpen && (
+                                <div className={styles.options_dropdown}>
+                                    {monthNames.map((name, idx) => (
+                                        <div
+                                            key={name}
+                                            className={`${styles.option} ${month === idx ? styles.selected : ''}`}
+                                            onClick={() => handleMonthSelect(idx)}
+                                        >
+                                            {name}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className={styles.selector}>
+                            <div onClick={() => setIsYearSelectOpen(!isYearSelectOpen)} className={styles.current_selection}>
+                                {year}
+                            </div>
+                            {isYearSelectOpen && (
+                                <div className={styles.options_dropdown}>
+                                    {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - 99 + i).map((y) => (
+                                        <div
+                                            key={y}
+                                            className={`${styles.option} ${year === y ? styles.selected : ''}`}
+                                            onClick={() => handleYearSelect(y)}
+                                        >
+                                            {y}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
                 <button type="button" onClick={handleNextMonth} className={styles.month_nav}>
                     →

@@ -9,7 +9,7 @@ class User {
         $this->db = Database::getInstance();
     }
     
-    public function create(array $userData): ?array {
+    public function create(array $userData): ?int {
         try {
             $stmt = $this->db->prepare("
                 INSERT INTO users (
@@ -36,19 +36,18 @@ class User {
             
             $params = [
                 'nickname' => $userData['nickname'],
-                'password_hash' => $userData['password'],  // Уже захешировано в контроллере
+                'password_hash' => password_hash($userData['password'], PASSWORD_DEFAULT),
                 'birth_date' => $userData['birth_date'],
                 'bio' => $userData['bio'] ?? null,
                 'avatar_path' => $userData['avatar_path'] ?? null,
                 'is_private' => $userData['is_private'] ?? 0,
-                'last_seen' => $userData['last_seen'] ?? date('Y-m-d H:i:s'),
-                'is_online' => $userData['is_online'] ?? 0
+                'last_seen' => date('Y-m-d H:i:s'),
+                'is_online' => 1
             ];
             
             $stmt->execute($params);
-            $userId = $this->db->lastInsertId();
+            return (int)$this->db->lastInsertId();
             
-            return $this->getById($userId);
         } catch (PDOException $e) {
             error_log('Failed to create user: ' . $e->getMessage());
             return null;
@@ -103,6 +102,24 @@ class User {
             $stmt->execute(['id' => $userId]);
         } catch (PDOException $e) {
             error_log('Failed to update last seen: ' . $e->getMessage());
+        }
+    }
+    
+    public function updateAvatarPath(int $userId, string $avatarPath): void {
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE users 
+                SET avatar_path = :avatar_path 
+                WHERE id = :user_id
+            ");
+            
+            $stmt->execute([
+                'avatar_path' => $avatarPath,
+                'user_id' => $userId
+            ]);
+        } catch (PDOException $e) {
+            error_log('Failed to update avatar path: ' . $e->getMessage());
+            throw $e;
         }
     }
     

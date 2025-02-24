@@ -28,6 +28,7 @@ body {
     right: 0;
     bottom: 0;
     overflow-y: auto;
+    overflow: visible;
 }
 
 .auth_container {
@@ -44,6 +45,7 @@ body {
     position: relative;
     overflow: hidden;
     margin: auto;
+    overflow: visible;
 }
 
 .auth_container::before {
@@ -465,6 +467,21 @@ body {
 .form_options a {
     color: #fff;
     text-decoration: none;
+}
+
+.auth_form {
+    position: relative;
+    overflow: visible;
+}
+
+.form_group {
+    position: relative;
+    overflow: visible;
+}
+
+.input_group {
+    position: relative;
+    overflow: visible;
 }
 
 /* Responsive design */

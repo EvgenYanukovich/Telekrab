@@ -20,25 +20,19 @@ export const login = async (credentials: LoginCredentials): Promise<AuthResponse
 
 export const register = async (credentials: RegisterCredentials): Promise<void> => {
     try {
-        console.log('Register function called with credentials:', credentials);
         const formData = new FormData();
         
         // Обработка файла аватара
         if (credentials.avatar) {
-            console.log('Avatar found in credentials:', credentials.avatar);
-            
             let file: File | null = null;
             if (credentials.avatar instanceof FileList) {
                 file = credentials.avatar[0];
-                console.log('Avatar is FileList, using first file:', file);
             } else if (credentials.avatar instanceof File) {
                 file = credentials.avatar;
-                console.log('Avatar is File:', file);
             }
             
             if (file) {
                 formData.append('avatar', file);
-                console.log('Added avatar to FormData:', file.name);
             }
         }
 
@@ -47,25 +41,16 @@ export const register = async (credentials: RegisterCredentials): Promise<void> 
         Object.entries(otherFields).forEach(([key, value]) => {
             if (value !== undefined) {
                 formData.append(key, String(value));
-                console.log(`Added field to FormData - ${key}:`, value);
             }
         });
 
-        // Проверяем содержимое FormData перед отправкой
-        console.log('FormData entries:');
-        for (const pair of formData.entries()) {
-            console.log(pair[0], pair[1]);
-        }
-
-        const response = await axiosInstance.post('/auth/register', formData, {
+        await axiosInstance.post('/auth/register', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
-        
-        console.log('Registration successful:', response.data);
-    } catch (error: any) {
-        console.error('Registration error:', error.response?.data || error.message);
+    } catch (error) {
+        console.error('Register error:', error);
         throw error;
     }
 };

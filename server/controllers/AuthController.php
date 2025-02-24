@@ -11,173 +11,183 @@ class AuthController {
     }
     
     public function login(): void {
-        $data = json_decode(file_get_contents('php://input'), true);
-        
-        if (!isset($data['nickname']) || !isset($data['password'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Nickname and password are required']);
-            return;
+        try {
+            $jsonData = file_get_contents('php://input');
+            $data = json_decode($jsonData, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception('Invalid JSON data');
+            }
+
+            if (!isset($data['nickname']) || !isset($data['password'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Nickname and password are required']);
+                return;
+            }
+
+            $user = $this->userModel->getByNickname($data['nickname']);
+            if (!$user) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Invalid nickname or password']);
+                return;
+            }
+
+            if (!$this->userModel->verifyPassword($data['password'], $user['password_hash'])) {
+                http_response_code(401);
+                echo json_encode(['error' => 'Invalid nickname or password']);
+                return;
+            }
+
+            $this->userModel->updateLastSeen($user['id']);
+            unset($user['password_hash']);
+
+            $token = JWT::generate([
+                'user_id' => $user['id'],
+                'nickname' => $user['nickname']
+            ]);
+
+            echo json_encode([
+                'token' => $token,
+                'user' => $user
+            ]);
+
+        } catch (Exception $e) {
+            error_log('Error in login: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Internal server error']);
         }
-        
-        $user = $this->userModel->getByNickname($data['nickname']);
-        
-        if (!$user || !$this->userModel->verifyPassword($data['password'], $user['password_hash'])) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Invalid credentials']);
-            return;
-        }
-        
-        // Обновляем время последнего входа
-        $this->userModel->updateLastSeen($user['id']);
-        
-        // Создаем токен
-        $token = JWT::generate([
-            'user_id' => $user['id'],
-            'nickname' => $user['nickname']
-        ]);
-        
-        // Убираем чувствительные данные
-        unset($user['password_hash']);
-        
-        echo json_encode([
-            'token' => $token,
-            'user' => $user
-        ]);
     }
     
     public function register(): void {
         try {
-            error_log('Register method called');
-            error_log('POST data: ' . print_r($_POST, true));
-            error_log('FILES data: ' . print_r($_FILES, true));
-
-            // Проверяем наличие обязательных полей
-            $requiredFields = ['nickname', 'password', 'birthDate'];
+            // Validate required fields
+            $requiredFields = ['nickname', 'password', 'confirmPassword', 'birthDate'];
             foreach ($requiredFields as $field) {
                 if (!isset($_POST[$field]) || empty($_POST[$field])) {
-                    error_log("Missing required field: $field");
                     http_response_code(400);
                     echo json_encode(['error' => "Missing required field: $field"]);
                     return;
                 }
             }
             
-            $nickname = $_POST['nickname'];
-            $password = $_POST['password'];
-            $birthDate = $_POST['birthDate'];
-            $bio = $_POST['bio'] ?? null;
-            
-            error_log("Nickname: $nickname");
-            error_log("Birth date: $birthDate");
-            error_log("Bio: $bio");
-            
-            // Валидация
-            if ($password !== $_POST['confirmPassword']) {
+            // Password validation
+            if ($_POST['password'] !== $_POST['confirmPassword']) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Passwords do not match']);
                 return;
             }
+
+            if (strlen($_POST['password']) < 6) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Password must be at least 6 characters long']);
+                return;
+            }
+
+            if (!preg_match('/[A-Z]/', $_POST['password'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Password must contain at least one uppercase letter']);
+                return;
+            }
+
+            if (!preg_match('/[0-9]/', $_POST['password'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Password must contain at least one number']);
+                return;
+            }
+
+            if (!preg_match('/^[a-zA-Z0-9]+$/', $_POST['password'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Password can only contain Latin letters and numbers']);
+                return;
+            }
+
+            // Age validation
+            $birthDateTime = new DateTime($_POST['birthDate']);
+            $now = new DateTime();
+            $age = $now->diff($birthDateTime)->y;
             
-            // Обработка аватара
+            if ($age < 14) {
+                http_response_code(400);
+                echo json_encode(['error' => 'You must be at least 14 years old']);
+                return;
+            }
+            
+            // Nickname validation
+            if (strlen($_POST['nickname']) < 3) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Nickname must be at least 3 characters long']);
+                return;
+            }
+
+            if ($this->userModel->getByNickname($_POST['nickname'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Nickname is already taken']);
+                return;
+            }
+
+            // Handle avatar upload
             $avatarPath = null;
             if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
-                error_log('Processing avatar upload');
-                error_log('Avatar details: ' . print_r($_FILES['avatar'], true));
+                $file = $_FILES['avatar'];
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
                 
-                $uploadDir = __DIR__ . '/../images/avatars/';
-                error_log('Upload directory: ' . $uploadDir);
-                
-                // Создаем директорию, если её нет
+                if (!in_array($file['type'], $allowedTypes)) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'Invalid file type. Only JPG, PNG and GIF are allowed']);
+                    return;
+                }
+
+                $uploadDir = __DIR__ . '/../uploads/avatars/';
                 if (!file_exists($uploadDir)) {
-                    error_log('Creating avatars directory');
-                    if (!mkdir($uploadDir, 0777, true)) {
-                        error_log('Failed to create directory: ' . error_get_last()['message']);
-                        throw new Exception('Failed to create upload directory');
-                    }
+                    mkdir($uploadDir, 0777, true);
                 }
-                
-                // Проверяем права доступа
-                if (!is_writable($uploadDir)) {
-                    error_log('Upload directory is not writable');
-                    throw new Exception('Upload directory is not writable');
-                }
-                
-                // Проверяем тип файла
-                $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mimeType = finfo_file($fileInfo, $_FILES['avatar']['tmp_name']);
-                finfo_close($fileInfo);
-                
-                error_log("File mime type: $mimeType");
-                
-                if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif'])) {
-                    error_log('Invalid file type: ' . $mimeType);
-                    throw new Exception('Invalid file type. Only JPEG, PNG and GIF are allowed');
-                }
-                
-                // Генерируем имя файла
-                $extension = strtolower(pathinfo($_FILES['avatar']['name'], PATHINFO_EXTENSION));
+
+                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
                 $fileName = uniqid('avatar_') . '.' . $extension;
-                $fullPath = $uploadDir . $fileName;
-                $avatarPath = 'images/avatars/' . $fileName;
-                
-                error_log("Full path for upload: $fullPath");
-                
-                // Проверяем временный файл
-                if (!file_exists($_FILES['avatar']['tmp_name'])) {
-                    error_log('Temp file does not exist');
-                    throw new Exception('Upload failed: temporary file not found');
+                $targetPath = $uploadDir . $fileName;
+
+                if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+                    throw new Exception('Failed to move uploaded file');
                 }
-                
-                if (!is_readable($_FILES['avatar']['tmp_name'])) {
-                    error_log('Temp file is not readable');
-                    throw new Exception('Upload failed: temporary file not readable');
-                }
-                
-                // Перемещаем файл
-                if (!move_uploaded_file($_FILES['avatar']['tmp_name'], $fullPath)) {
-                    $error = error_get_last();
-                    error_log('Failed to move uploaded file. Error: ' . ($error ? $error['message'] : 'Unknown error'));
-                    throw new Exception('Failed to upload avatar');
-                }
-                
-                // Проверяем, что файл создан
-                if (!file_exists($fullPath)) {
-                    error_log('File was not created after upload');
-                    throw new Exception('Failed to verify uploaded file');
-                }
-                
-                error_log('Avatar uploaded successfully to: ' . $fullPath);
+
+                $avatarPath = '/uploads/avatars/' . $fileName;
             }
-            
-            // Создаем пользователя
-            $userData = [
-                'nickname' => $nickname,
-                'password' => password_hash($password, PASSWORD_DEFAULT),
-                'birth_date' => $birthDate,
-                'bio' => $bio,
-                'avatar_path' => $avatarPath,
-                'is_private' => 0,
-                'last_seen' => date('Y-m-d H:i:s')
-            ];
-            
-            error_log('Creating user with data: ' . print_r($userData, true));
-            
-            $user = $this->userModel->create($userData);
+
+            // Create user
+            $userId = $this->userModel->create([
+                'nickname' => $_POST['nickname'],
+                'password' => password_hash($_POST['password'], PASSWORD_DEFAULT),
+                'birth_date' => $_POST['birthDate'],
+                'bio' => $_POST['bio'] ?? null,
+                'avatar_path' => $avatarPath
+            ]);
+
+            if (!$userId) {
+                throw new Exception('Failed to create user');
+            }
+
+            // Get created user data
+            $user = $this->userModel->getById($userId);
             if (!$user) {
-                throw new Exception('Failed to create user in database');
+                throw new Exception('Failed to retrieve created user');
             }
+            
+            // Generate token
+            $token = JWT::generate([
+                'user_id' => $user['id'],
+                'nickname' => $user['nickname']
+            ]);
             
             http_response_code(201);
             echo json_encode([
-                'message' => 'User created successfully',
+                'token' => $token,
                 'user' => $user
             ]);
-            
+
         } catch (Exception $e) {
-            error_log('Registration error: ' . $e->getMessage());
-            error_log('Stack trace: ' . $e->getTraceAsString());
+            error_log('Error in register: ' . $e->getMessage());
             http_response_code(500);
-            echo json_encode(['error' => $e->getMessage()]);
+            echo json_encode(['error' => 'Internal server error']);
         }
     }
 }

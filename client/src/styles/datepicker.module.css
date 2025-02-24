@@ -95,30 +95,30 @@
 }
 
 .calendar_header {
+    padding: 8px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 8px;
 }
 
 .month_nav {
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 1rem;
-    cursor: pointer;
     width: 28px;
     height: 28px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    background-color: var(--background-secondary);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
 }
 
 .month_nav:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background-color: var(--background-hover);
 }
 
 .month_year {
@@ -174,4 +174,82 @@
     aspect-ratio: 1;
     width: 28px;
     height: 28px;
+}
+
+.selectors_container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.selector {
+    position: relative;
+    cursor: pointer;
+}
+
+.current_selection {
+    padding: 4px 8px;
+    border-radius: 8px;
+    background-color: var(--background-secondary);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.current_selection:hover {
+    background-color: var(--background-hover);
+}
+
+.options_dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 4px;
+}
+
+.option {
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    text-align: center;
+}
+
+.option:hover {
+    background-color: var(--background-hover);
+}
+
+.option.selected {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.options_dropdown::-webkit-scrollbar {
+    width: 4px;
+}
+
+.options_dropdown::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+    border-radius: 2px;
+}
+
+.options_dropdown::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 2px;
+}
+
+.options_dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color-dark);
 }
