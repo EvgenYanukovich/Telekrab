@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { register as registerUser } from '../api/auth';
 import { RegisterCredentials } from '../types/auth';
@@ -313,6 +313,13 @@ export const Register: React.FC = () => {
                         <span className={styles.error_text}>{errors.root.message}</span>
                     )}
                 </form>
+
+                <div className={styles.auth_footer}>
+                    <p>Уже есть аккаунт?</p>
+                    <Link to="/login" className={styles.register_link}>
+                        Войти
+                    </Link>
+                </div>
             </div>
         </div>
     );
