@@ -5,12 +5,13 @@ import { useMutation } from '@tanstack/react-query';
 import { register as registerUser } from '../api/auth';
 import { RegisterCredentials } from '../types/auth';
 import styles from '../styles/auth.module.css';
+import { DatePicker } from '../components/DatePicker';
 
 export const Register: React.FC = () => {
     const navigate = useNavigate();
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const { register, handleSubmit, watch, formState: { errors }, setError, setValue } = useForm<RegisterCredentials>();
-    
+    const { register, handleSubmit, watch, formState: { errors }, setError, setValue, trigger } = useForm<RegisterCredentials>();
+
     const registerMutation = useMutation({
         mutationFn: registerUser,
         onSuccess: () => {
@@ -74,120 +75,116 @@ export const Register: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className={styles.avatar_section}>
-                        <div 
-                            className={`${styles.avatar_upload} ${previewUrl ? styles.has_image : ''}`}
-                            onClick={() => document.getElementById('avatar-input')?.click()}
-                            onDrop={handleDrop}
-                            onDragOver={handleDragOver}
-                        >
-                            {previewUrl ? (
-                                <>
-                                    <img src={previewUrl} alt="Avatar preview" />
-                                    <div className={styles.avatar_overlay}>
-                                        <span>Изменить фото</span>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className={styles.avatar_placeholder}>
-                                    <span className={styles.avatar_icon}>📷</span>
-                                    <span>Добавьте фото</span>
-                                    <span className={styles.avatar_hint}>Перетащите или кликните</span>
-                                </div>
-                            )}
-                        </div>
-                        {previewUrl && (
-                            <button 
-                                type="button" 
-                                className={styles.remove_avatar}
-                                onClick={removeAvatar}
+                    <div className={styles.form_group_with_avatar}>
+                        <div className={styles.avatar_section}>
+                            <div
+                                className={`${styles.avatar_upload} ${previewUrl ? styles.has_image : ''}`}
+                                onClick={() => document.getElementById('avatar-input')?.click()}
+                                onDrop={handleDrop}
+                                onDragOver={handleDragOver}
                             >
-                                Удалить фото
-                            </button>
-                        )}
-                        <input
-                            id="avatar-input"
-                            type="file"
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            {...register('avatar')}
-                            onChange={handleImageChange}
+                                {previewUrl ? (
+                                    <>
+                                        <img src={previewUrl} alt="Avatar preview" />
+                                        <div className={styles.avatar_overlay}>
+                                            <span>Изменить<br/>фото</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className={styles.avatar_placeholder}>
+                                        <div className={styles.avatar_icon}></div>
+                                        <span>Добавьте фото</span>
+                                        <span className={styles.avatar_hint}>Перетащите или<br/>кликните</span>
+                                    </div>
+                                )}
+                            </div>
+                            {previewUrl && (
+                                <button
+                                    type="button"
+                                    className={styles.remove_avatar}
+                                    onClick={removeAvatar}
+                                >
+                                    Удалить фото
+                                </button>
+                            )}
+                            <input
+                                id="avatar-input"
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                {...register('avatar')}
+                                onChange={handleImageChange}
+                            />
+                        </div>
+                        <div className={styles.form_group_without_avatar}>
+                            <div className={styles.form_group}>
+                                <div className={styles.input_group}>
+                                    <input
+                                        type="text"
+                                        placeholder="Никнейм"
+                                        className={errors.nickname ? styles.error_input : ''}
+                                        {...register('nickname', {
+                                            required: 'Введите никнейм',
+                                            minLength: {
+                                                value: 3,
+                                                message: 'Никнейм должен содержать минимум 3 символа'
+                                            }
+                                        })}
+                                    />
+                                </div>
+                                {errors.nickname && (
+                                    <span className={styles.error_text}>{errors.nickname.message}</span>
+                                )}
+                            </div>
+
+                            <div className={styles.form_group}>
+                                <div className={styles.input_group}>
+                                    <input
+                                        type="password"
+                                        placeholder="Пароль"
+                                        className={errors.password ? styles.error_input : ''}
+                                        {...register('password', {
+                                            required: 'Введите пароль',
+                                            minLength: {
+                                                value: 6,
+                                                message: 'Пароль должен содержать минимум 6 символов'
+                                            }
+                                        })}
+                                    />
+                                </div>
+                                {errors.password && (
+                                    <span className={styles.error_text}>{errors.password.message}</span>
+                                )}
+                            </div>
+
+                            <div className={styles.form_group}>
+                                <div className={styles.input_group}>
+                                    <input
+                                        type="password"
+                                        placeholder="Подтвердите пароль"
+                                        className={errors.confirmPassword ? styles.error_input : ''}
+                                        {...register('confirmPassword', {
+                                            required: 'Подтвердите пароль',
+                                            validate: (value) =>
+                                                value === watch('password') || 'Пароли не совпадают'
+                                        })}
+                                    />
+                                </div>
+                                {errors.confirmPassword && (
+                                    <span className={styles.error_text}>{errors.confirmPassword.message}</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.form_group}>
+                        <DatePicker
+                            value={watch('birthDate') || ''}
+                            onChange={(date) => setValue('birthDate', date)}
+                            placeholder="Дата рождения"
+                            error={!!errors.birthDate}
+                            onBlur={() => trigger('birthDate')}
                         />
-                    </div>
-
-                    <div className={styles.form_group}>
-                        <div className={styles.input_group}>
-                            <input
-                                type="text"
-                                placeholder="Никнейм"
-                                className={errors.nickname ? styles.error_input : ''}
-                                {...register('nickname', { 
-                                    required: 'Введите никнейм',
-                                    minLength: {
-                                        value: 3,
-                                        message: 'Никнейм должен содержать минимум 3 символа'
-                                    }
-                                })}
-                            />
-                            <span className={styles.input_icon}>👤</span>
-                        </div>
-                        {errors.nickname && (
-                            <span className={styles.error_text}>{errors.nickname.message}</span>
-                        )}
-                    </div>
-
-                    <div className={styles.form_group}>
-                        <div className={styles.input_group}>
-                            <input
-                                type="password"
-                                placeholder="Пароль"
-                                className={errors.password ? styles.error_input : ''}
-                                {...register('password', { 
-                                    required: 'Введите пароль',
-                                    minLength: {
-                                        value: 6,
-                                        message: 'Пароль должен содержать минимум 6 символов'
-                                    }
-                                })}
-                            />
-                            <span className={styles.input_icon}>🔒</span>
-                        </div>
-                        {errors.password && (
-                            <span className={styles.error_text}>{errors.password.message}</span>
-                        )}
-                    </div>
-
-                    <div className={styles.form_group}>
-                        <div className={styles.input_group}>
-                            <input
-                                type="password"
-                                placeholder="Подтвердите пароль"
-                                className={errors.confirmPassword ? styles.error_input : ''}
-                                {...register('confirmPassword', {
-                                    required: 'Подтвердите пароль',
-                                    validate: (value) => 
-                                        value === watch('password') || 'Пароли не совпадают'
-                                })}
-                            />
-                            <span className={styles.input_icon}>🔒</span>
-                        </div>
-                        {errors.confirmPassword && (
-                            <span className={styles.error_text}>{errors.confirmPassword.message}</span>
-                        )}
-                    </div>
-
-                    <div className={styles.form_group}>
-                        <div className={styles.input_group}>
-                            <input
-                                type="date"
-                                placeholder="Дата рождения"
-                                className={errors.birthDate ? styles.error_input : ''}
-                                {...register('birthDate', { 
-                                    required: 'Укажите дату рождения'
-                                })}
-                            />
-                            <span className={styles.input_icon}>📅</span>
-                        </div>
                         {errors.birthDate && (
                             <span className={styles.error_text}>{errors.birthDate.message}</span>
                         )}
@@ -206,8 +203,8 @@ export const Register: React.FC = () => {
                         )}
                     </div>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className={styles.submit_button}
                         disabled={registerMutation.isPending}
                     >

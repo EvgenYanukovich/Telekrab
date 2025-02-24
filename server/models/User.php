@@ -102,7 +102,7 @@ class User {
             
             $stmt->execute(['id' => $userId]);
         } catch (PDOException $e) {
-            // Логировать ошибку
+            error_log('Failed to update last seen: ' . $e->getMessage());
         }
     }
     
