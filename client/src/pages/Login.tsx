@@ -33,7 +33,7 @@ export const Login: React.FC = () => {
                     <p>Войдите в свой аккаунт Telekrab</p>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)} className={styles.form_container}>
                     <div className={styles.form_group}>
                         <div className={styles.input_group}>
                             <input
