@@ -1,64 +1,77 @@
+.hints_portal {
+  position: absolute;
+  z-index: 9999;
+  pointer-events: none;
+}
+
 .hints_container {
-    position: absolute;
-    left: calc(100% + 20px);
-    top: 0;
-    width: 280px;
-    background: rgba(30, 30, 40, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    padding: 16px;
-    z-index: 1000;
+  background: rgba(30, 40, 60, 0.98);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  animation: fadeIn 0.2s ease-out forwards;
+  pointer-events: auto;
+}
+
+@media (min-width: 768px) {
+    .hints_container {
+        width: 280px;
+        margin-top: 0;
+    }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .hints_content {
-    color: #fff;
+  color: #fff;
 }
 
 .hints_title {
-    font-size: 1rem;
-    font-weight: 500;
-    margin-bottom: 12px;
-    color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .hints_list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .hint_item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.hint_item:last-child {
+  margin-bottom: 0;
 }
 
 .hint_icon {
-    margin-right: 8px;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  font-size: 12px;
 }
 
 .valid .hint_icon {
-    color: #4CAF50;
+  color: #4caf50;
 }
 
 .invalid .hint_icon {
-    color: #f44336;
+  color: #f44336;
 }
 
 .hint_text {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.valid .hint_text {
-    color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.9);
 }

@@ -1,0 +1,488 @@
+/* Базовые настройки */
+:root {
+  --primary-color: #646cff;
+  --primary-hover: #7c84ff;
+  --background-dark: #1a2742;
+  --text-light: #ffffff;
+  --text-dim: #8d98b2;
+  --error-color: #ff4d4d;
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --container-bg: rgba(255, 255, 255, 0.07);
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.5rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-xxl: 2.5rem;
+  --font-sm: 0.875rem;
+  --font-md: 1rem;
+  --font-lg: 1.25rem;
+  --font-xl: 1.75rem;
+  --font-xxl: 2.25rem;
+  --shadow-sm: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+  --button-color: #656cff;
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --form-element-z-index: 1;
+  --dropdown-z-index: 9999;
+}
+
+/* Общие стили */
+/* Контейнер регистрации */
+.register_container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a2436 0%, #0d1420 100%);
+  padding: var(--space-lg);
+}
+
+/* Содержимое формы регистрации */
+.register_content {
+  position: relative;
+  z-index: var(--form-element-z-index);
+  display: flex;
+  flex-direction: column;
+  width: clamp(20rem, 90vw, 30rem);
+  height: clamp(20rem, 90vh, 43rem);
+  background: var(--container-bg);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Анимированный фон */
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Главный контейнер с градиентным фоном */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(-45deg, var(--background-dark), #16213e, #1b2436, #0f3460);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+/* Контейнер формы */
+.auth_container {
+  display: flex;
+  flex-direction: column;
+  width: clamp(20rem, 90vw, 30rem);
+  height: clamp(20rem, 90vh, 43rem);
+  background: var(--container-bg);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 0 2rem rgba(255, 255, 255, 0.05);
+  overflow: auto;
+  max-height: 90vh;
+}
+
+/* Шапка формы */
+.auth_header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-lg);
+}
+
+.auth_header h1 {
+  font-size: var(--font-xxl);
+  font-weight: 600;
+  color: var(--text-light);
+  padding-bottom: var(--space-xs);
+  background: linear-gradient(to right, #fff, #a5b4fc);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(165, 180, 252, 0.4);
+  letter-spacing: 0.5px;
+}
+
+.auth_header p {
+  font-size: var(--font-sm);
+  color: var(--text-dim);
+  font-weight: 300;
+}
+
+/* Контейнер формы */
+.form_container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding-inline: var(--space-lg);
+}
+
+/* Группа формы */
+.form_group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  width: 100%;
+  
+}
+
+/* Группа формы с аватаром */
+.form_group_with_avatar {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-lg);
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 40%;
+}
+
+/* Секция формы без аватара */
+.form_group_without_avatar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  max-width: 65%;
+  height: 100%
+}
+
+/* Секция аватара */
+.avatar_section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Зона загрузки аватара */
+.avatar_upload {
+  width: 9rem;
+  height: 9rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  transition: var(--transition-normal);
+}
+
+.avatar_upload:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.avatar_upload img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar_overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: var(--transition-normal);
+}
+
+.avatar_upload:hover .avatar_overlay {
+  opacity: 1;
+}
+
+.avatar_overlay span {
+  color: var(--text-light);
+  font-size: var(--font-sm);
+  text-align: center;
+}
+
+.avatar_placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.avatar_icon {
+  width: 2rem;
+  height: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.avatar_icon::before {
+  content: '';
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+}
+
+.avatar_hint {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.remove_avatar {
+  background: none;
+  border: 1px solid var(--error-color);
+  color: var(--error-color);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-xs);
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+  animation-delay: 0.2s;
+}
+
+.remove_avatar:hover {
+  background-color: var(--error-color);
+  color: white;
+}
+
+/* Анимации для аватара */
+@keyframes avatarLoaded {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.has_image {
+  border-style: solid;
+  border-color: var(--primary-color);
+  animation: avatarLoaded 0.5s ease;
+}
+
+/* Группа ввода */
+.input_group {
+  position: relative;
+  width: 100%;
+}
+
+.input_wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input_group input,
+.input_group textarea {
+  width: 100%;
+  height: 3rem;
+  background: rgba(255, 255, 255, 0.07);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-light);
+  font-size: var(--font-md);
+  padding-inline: var(--space-lg);
+  transition: var(--transition-normal);
+}
+
+.input_group textarea {
+  height: 7rem;
+  padding-top: var(--space-md);
+  padding-bottom: var(--space-md);
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.input_group input:focus,
+.input_group textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.input_group input::placeholder,
+.input_group textarea::placeholder {
+  color: var(--text-dim);
+}
+
+.input_icon {
+  position: absolute;
+  right: var(--space-lg);
+  color: #ffc107;
+  font-size: var(--font-md);
+  pointer-events: none;
+}
+
+/* Сообщение об ошибке */
+.error_text {
+  color: var(--error-color);
+  font-size: var(--font-sm);
+}
+
+.error_input {
+  border-color: var(--error-color) !important;
+}
+
+.error_message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  background: rgba(255, 77, 77, 0.1);
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  color: var(--error-color);
+  border-radius: var(--radius-sm);
+  padding-block: var(--space-sm);
+}
+
+/* Кнопка отправки */
+.submit_button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 3rem;
+  background: var(--button-color);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-light);
+  font-size: var(--font-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  margin-bottom: var(--space-lg);
+}
+
+.submit_button:hover {
+  opacity: 0.9;
+}
+
+.submit_button:disabled {
+  background: #4a4a5a;
+  cursor: not-allowed;
+}
+
+/* Подвал формы */
+.auth_footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding-bottom: var(--space-lg);
+}
+
+.auth_footer p {
+  color: var(--text-dim);
+  font-size: var(--font-sm);
+  margin: 0;
+}
+
+.register_link {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: var(--transition-fast);
+  font-weight: 500;
+  margin-left: var(--space-xs);
+}
+
+.register_link:hover {
+  text-decoration: underline;
+}
+
+/* Медиа-запросы */
+@media (max-width: 768px) {
+  .auth_container {
+    width: 95%;
+    max-height: 80vh;
+  }
+  
+  .form_container {
+    gap: var(--space-md);
+  }
+  
+  .form_group_with_avatar {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .avatar_upload {
+    width: 6rem;
+    height: 6rem;
+  }
+  
+  .input_group input,
+  .input_group textarea,
+  .datepicker_input {
+    height: 2.75rem;
+  }
+  
+  .input_group textarea {
+    height: 6rem;
+  }
+  
+  .submit_button {
+    height: 2.75rem;
+  }
+  
+  .auth_header h1 {
+    font-size: var(--font-xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .form_options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+  
+  .auth_header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .auth_container {
+    width: 100%;
+    border-radius: 0;
+    height: 100%;
+    max-height: 100vh;
+  }
+  
+  .container {
+    align-items: flex-start;
+  }
+}

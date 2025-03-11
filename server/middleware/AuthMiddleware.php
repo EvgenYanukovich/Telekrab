@@ -13,8 +13,24 @@ class AuthMiddleware {
             exit(0);
         }
 
-        header('Access-Control-Allow-Origin: http://localhost');
-        header('Access-Control-Allow-Credentials: true');
+        // Разрешаем запросы как с localhost, так и с домена telekrab.org
+        $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+        
+        // Список разрешенных доменов
+        $allowed_origins = [
+            'http://localhost',
+            'http://localhost:3000',
+            'https://telekrab.org',
+            'https://www.telekrab.org',
+            'https://api.telekrab.org'
+        ];
+        
+        if (in_array($origin, $allowed_origins)) {
+            header("Access-Control-Allow-Origin: $origin");
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        }
     }
 
     public static function validateToken(): ?array {

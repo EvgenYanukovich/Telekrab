@@ -4,12 +4,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { login } from '../api/auth';
 import { LoginCredentials, AuthResponse } from '../types/auth';
-import styles from '../styles/auth.module.css';
+import styles from '../styles/Login.module.css';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/ToastNotification';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
     const { setUser } = useAuth();
+    const { showToast } = useToast();
     const { register, handleSubmit, formState: { errors } } = useForm<LoginCredentials>();
 
     const loginMutation = useMutation({
@@ -17,12 +19,60 @@ export const Login: React.FC = () => {
         onSuccess: (data: AuthResponse) => {
             localStorage.setItem('token', data.token);
             setUser(data.user);
+            showToast('success', 'Вы успешно вошли в систему', 'Успешный вход');
             navigate('/home');
         },
+        onError: (error: any) => {
+            if (error.response?.data?.error) {
+                // Разделяем ошибки валидации, если они в списке через точку с запятой
+                if (error.response.data.error.includes('Ошибки валидации:')) {
+                    const errorMessage = error.response.data.error;
+                    const errors = errorMessage.replace('Ошибки валидации: ', '').split('; ');
+                    
+                    // Показываем каждую ошибку как отдельное уведомление с небольшой задержкой между ними
+                    errors.forEach((errMsg: string, index: number) => {
+                        setTimeout(() => {
+                            showToast('error', errMsg, 'Ошибка валидации');
+                        }, index * 300); // 300мс задержка между уведомлениями
+                    });
+                } else {
+                    // Обычное сообщение об ошибке
+                    showToast('error', error.response.data.error, 'Ошибка входа');
+                }
+            } else {
+                showToast('error', 'Произошла неизвестная ошибка. Пожалуйста, попробуйте позже.', 'Ошибка входа');
+            }
+        }
     });
 
     const onSubmit = (data: LoginCredentials) => {
         loginMutation.mutate(data);
+    };
+
+    const handleValidationErrors = (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // Проверяем наличие ошибок валидации
+        if (Object.keys(errors).length > 0) {
+            let hasErrors = false;
+            
+            // Собираем все ошибки и показываем их с небольшой задержкой между ними
+            Object.values(errors).forEach((error, index) => {
+                if (error && error.message) {
+                    hasErrors = true;
+                    setTimeout(() => {
+                        showToast('error', String(error.message), 'Ошибка валидации');
+                    }, index * 300); // 300мс задержка между уведомлениями
+                }
+            });
+            
+            if (hasErrors) {
+                return; // Останавливаем отправку формы при наличии ошибок
+            }
+        }
+        
+        // Продолжаем обычную обработку формы
+        handleSubmit(onSubmit)(e);
     };
 
     return (
@@ -33,13 +83,12 @@ export const Login: React.FC = () => {
                     <p>Войдите в свой аккаунт Telekrab</p>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)} className={styles.form_container}>
+                <form onSubmit={handleValidationErrors} className={styles.form_container}>
                     <div className={styles.form_group}>
                         <div className={styles.input_group}>
                             <input
                                 type="text"
                                 placeholder="Никнейм"
-                                className={errors.nickname ? styles.error_input : ''}
                                 {...register('nickname', { 
                                     required: 'Введите никнейм',
                                     minLength: {
@@ -49,9 +98,6 @@ export const Login: React.FC = () => {
                                 })}
                             />
                         </div>
-                        {errors.nickname && (
-                            <span className={styles.error_text}>{errors.nickname.message}</span>
-                        )}
                     </div>
 
                     <div className={styles.form_group}>
@@ -59,7 +105,6 @@ export const Login: React.FC = () => {
                             <input
                                 type="password"
                                 placeholder="Пароль"
-                                className={errors.password ? styles.error_input : ''}
                                 {...register('password', { 
                                     required: 'Введите пароль',
                                     minLength: {
@@ -70,9 +115,6 @@ export const Login: React.FC = () => {
                             />
                             <span className={styles.input_icon}>🔒</span>
                         </div>
-                        {errors.password && (
-                            <span className={styles.error_text}>{errors.password.message}</span>
-                        )}
                     </div>
 
                     <div className={styles.form_options}>
@@ -97,18 +139,12 @@ export const Login: React.FC = () => {
                             <span className={styles.loading_spinner}>⌛</span>
                         ) : 'Войти'}
                     </button>
-
-                    {loginMutation.isError && (
-                        <div className={styles.error_message}>
-                            Неверный никнейм или пароль
-                        </div>
-                    )}
                 </form>
 
                 <div className={styles.auth_footer}>
                     <p>Нет аккаунта?</p>
                     <Link to="/register" className={styles.register_link}>
-                        Зарегистрироваться
+                        Регистрация
                     </Link>
                 </div>
             </div>

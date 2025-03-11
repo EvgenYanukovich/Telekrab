@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import styles from '../styles/datepicker.module.css';
 
 interface DatePickerProps {
@@ -23,18 +24,86 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     const [isYearSelectOpen, setIsYearSelectOpen] = useState(false);
     const [isMonthSelectOpen, setIsMonthSelectOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const calendarRef = useRef<HTMLDivElement | null>(null);
 
+    // Создаем портал при монтировании компонента
+    useEffect(() => {
+        calendarRef.current = document.createElement('div');
+        calendarRef.current.style.position = 'absolute';
+        calendarRef.current.style.zIndex = '9999';
+        
+        return () => {
+            if (calendarRef.current && document.body.contains(calendarRef.current)) {
+                document.body.removeChild(calendarRef.current);
+            }
+        };
+    }, []);
+    
+    // Обрабатываем клики вне календаря
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            // Проверяем, не кликнули ли внутри контейнера или календаря
+            const isClickInsideContainer = containerRef.current && containerRef.current.contains(event.target as Node);
+            const isClickInsideCalendar = calendarRef.current && calendarRef.current.contains(event.target as Node);
+            
+            if (!isClickInsideContainer && !isClickInsideCalendar) {
                 setIsOpen(false);
                 onBlur?.();
             }
         };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [onBlur]);
+        
+        // Останавливаем всплытие события для кликов в календаре
+        const handleCalendarClick = (e: Event) => {
+            e.stopPropagation();
+        };
+        
+        if (isOpen && calendarRef.current) {
+            document.addEventListener('mousedown', handleClickOutside);
+            calendarRef.current.addEventListener('click', handleCalendarClick);
+            
+            // Добавляем календарь в DOM, если он еще не добавлен
+            if (!document.body.contains(calendarRef.current)) {
+                document.body.appendChild(calendarRef.current);
+            }
+            
+            // Обновляем позицию календаря
+            updateCalendarPosition();
+        }
+        
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            if (calendarRef.current) {
+                calendarRef.current.removeEventListener('click', handleCalendarClick);
+            }
+        };
+    }, [isOpen, onBlur]);
+    
+    // Обновляем позицию календаря при изменении размера окна
+    useEffect(() => {
+        const handleResize = () => {
+            if (isOpen) {
+                updateCalendarPosition();
+            }
+        };
+        
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('scroll', handleResize);
+        
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('scroll', handleResize);
+        };
+    }, [isOpen]);
+    
+    // Функция обновления позиции календаря
+    const updateCalendarPosition = () => {
+        if (!calendarRef.current || !containerRef.current) return;
+        
+        const rect = containerRef.current.getBoundingClientRect();
+        calendarRef.current.style.top = `${window.scrollY + rect.bottom + 8}px`;
+        calendarRef.current.style.left = `${window.scrollX + rect.left}px`;
+        calendarRef.current.style.width = `${rect.width}px`;
+    };
 
     const getDaysInMonth = (month: number, year: number) => {
         return new Date(year, month + 1, 0).getDate();
@@ -49,13 +118,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const year = date.getFullYear();
         return `${year}-${month}-${day}`;
-    };
-
-    const handleDateSelect = (day: number) => {
-        const newDate = new Date(year, month, day);
-        setSelectedDate(newDate);
-        onChange(formatDate(newDate));
-        setIsOpen(false);
     };
 
     const handlePrevMonth = () => {
@@ -76,104 +138,176 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         }
     };
 
-    const handleYearSelect = (selectedYear: number) => {
+    const handleDateSelect = (day: number) => {
+        const newDate = new Date(year, month, day);
+        setSelectedDate(newDate);
+        onChange(formatDate(newDate));
+        setIsOpen(false);
+    };
+    
+    // Обработчик для очистки выбранной даты
+    const handleClearDate = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Предотвращаем открытие календаря
+        setSelectedDate(null);
+        onChange(''); // Отправляем пустую строку как значение
+    };
+
+    const months = [
+        'Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн',
+        'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'
+    ];
+
+    const handleSelectMonth = (monthIndex: number) => {
+        setMonth(monthIndex);
+        setIsMonthSelectOpen(false);
+    };
+
+    const handleSelectYear = (selectedYear: number) => {
         setYear(selectedYear);
         setIsYearSelectOpen(false);
     };
 
-    const handleMonthSelect = (selectedMonth: number) => {
-        setMonth(selectedMonth);
-        setIsMonthSelectOpen(false);
+    const renderYearSelect = () => {
+        const years = [];
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear - 100; i <= currentYear; i++) {
+            years.push(
+                <div
+                    key={i}
+                    className={`${styles.year_option} ${i === year ? styles.selected : ''}`}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectYear(i);
+                    }}
+                >
+                    {i}
+                </div>
+            );
+        }
+        return (
+            <div className={styles.select_dropdown}>
+                <div className={styles.dropdown_content}>
+                    {years}
+                </div>
+            </div>
+        );
+    };
+
+    const renderMonthSelect = () => {
+        return (
+            <div className={styles.select_dropdown}>
+                <div className={styles.dropdown_content}>
+                    {months.map((monthName, index) => (
+                        <div
+                            key={index}
+                            className={`${styles.month_option} ${index === month ? styles.selected : ''}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectMonth(index);
+                            }}
+                        >
+                            {monthName}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     };
 
     const renderCalendar = () => {
+        const days = [];
         const daysInMonth = getDaysInMonth(month, year);
         const firstDay = getFirstDayOfMonth(month, year);
-        const days = [];
-        const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 
-                          'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-
-        // Заголовок календаря
+        
+        // Добавляем шапку с месяцем и годом
         days.push(
             <div key="header" className={styles.calendar_header}>
-                <button type="button" onClick={handlePrevMonth} className={styles.month_nav}>
-                    ←
+                <button 
+                    className={styles.prev_month} 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handlePrevMonth();
+                    }}
+                >
+                    &lt;
                 </button>
                 <div className={styles.month_year}>
-                    <div className={styles.selectors_container}>
-                        <div className={styles.selector}>
-                            <div onClick={() => setIsMonthSelectOpen(!isMonthSelectOpen)} className={styles.current_selection}>
-                                {monthNames[month]}
-                            </div>
-                            {isMonthSelectOpen && (
-                                <div className={styles.options_dropdown}>
-                                    {monthNames.map((name, idx) => (
-                                        <div
-                                            key={name}
-                                            className={`${styles.option} ${month === idx ? styles.selected : ''}`}
-                                            onClick={() => handleMonthSelect(idx)}
-                                        >
-                                            {name}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        <div className={styles.selector}>
-                            <div onClick={() => setIsYearSelectOpen(!isYearSelectOpen)} className={styles.current_selection}>
-                                {year}
-                            </div>
-                            {isYearSelectOpen && (
-                                <div className={styles.options_dropdown}>
-                                    {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - 99 + i).map((y) => (
-                                        <div
-                                            key={y}
-                                            className={`${styles.option} ${year === y ? styles.selected : ''}`}
-                                            onClick={() => handleYearSelect(y)}
-                                        >
-                                            {y}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                    <div 
+                        className={styles.month_selector} 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsMonthSelectOpen(!isMonthSelectOpen);
+                            setIsYearSelectOpen(false);
+                        }}
+                    >
+                        {months[month]}
+                        {isMonthSelectOpen && renderMonthSelect()}
+                    </div>
+                    <div 
+                        className={styles.year_selector} 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsYearSelectOpen(!isYearSelectOpen);
+                            setIsMonthSelectOpen(false);
+                        }}
+                    >
+                        {year}
+                        {isYearSelectOpen && renderYearSelect()}
                     </div>
                 </div>
-                <button type="button" onClick={handleNextMonth} className={styles.month_nav}>
-                    →
+                <button 
+                    className={styles.next_month} 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleNextMonth();
+                    }}
+                >
+                    &gt;
                 </button>
             </div>
         );
-
-        // Дни недели
-        const weekDays = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+        
+        // Добавляем дни недели
         days.push(
             <div key="weekdays" className={styles.weekdays}>
-                {weekDays.map(day => (
-                    <div key={day} className={styles.weekday}>{day}</div>
-                ))}
+                <div>Пн</div>
+                <div>Вт</div>
+                <div>Ср</div>
+                <div>Чт</div>
+                <div>Пт</div>
+                <div>Сб</div>
+                <div>Вс</div>
             </div>
         );
-
-        // Пустые ячейки в начале месяца
+        
+        // Корректируем воскресенье (0) на 7 для правильного отображения
+        const adjustedFirstDay = firstDay === 0 ? 7 : firstDay;
+        
+        // Создаем пустые ячейки для дней до начала месяца
         const blanks = [];
-        for (let i = 0; i < firstDay; i++) {
-            blanks.push(<div key={`blank-${i}`} className={styles.day_blank}></div>);
+        for (let i = 1; i < adjustedFirstDay; i++) {
+            blanks.push(
+                <div key={`blank-${i}`} className={styles.day_blank}></div>
+            );
         }
-
-        // Дни месяца
+        
+        // Создаем ячейки для дней месяца
         const monthDays = [];
         for (let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(year, month, d);
             const isSelected = selectedDate && 
-                             selectedDate.getDate() === d && 
-                             selectedDate.getMonth() === month && 
-                             selectedDate.getFullYear() === year;
-
+                              selectedDate.getDate() === d && 
+                              selectedDate.getMonth() === month && 
+                              selectedDate.getFullYear() === year;
+            
             monthDays.push(
-                <div
-                    key={d}
+                <div 
+                    key={`day-${d}`} 
                     className={`${styles.day} ${isSelected ? styles.selected : ''}`}
-                    onClick={() => handleDateSelect(d)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleDateSelect(d);
+                    }}
                 >
                     {d}
                 </div>
@@ -200,22 +334,34 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         <div className={styles.datepicker_container} ref={containerRef}>
             <div
                 className={`${styles.datepicker_input} ${error ? styles.error : ''}`}
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setIsOpen(!isOpen);
+                }}
             >
                 {selectedDate ? (
-                    <span className={styles.selected_date}>
-                        {formatDisplayDate(selectedDate)}
-                    </span>
+                    <>
+                        <span className={styles.selected_date}>
+                            {formatDisplayDate(selectedDate)}
+                        </span>
+                        <button 
+                            className={styles.clear_date_button}
+                            onClick={handleClearDate}
+                            aria-label="Очистить дату"
+                        >
+                            ✕
+                        </button>
+                    </>
                 ) : (
                     <span className={styles.placeholder}>{placeholder}</span>
                 )}
-                
             </div>
             
-            {isOpen && (
+            {isOpen && calendarRef.current && createPortal(
                 <div className={styles.calendar_dropdown}>
                     {renderCalendar()}
-                </div>
+                </div>,
+                calendarRef.current
             )}
         </div>
     );
