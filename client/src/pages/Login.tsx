@@ -17,10 +17,51 @@ export const Login: React.FC = () => {
     const loginMutation = useMutation({
         mutationFn: login,
         onSuccess: (data: AuthResponse) => {
-            localStorage.setItem('token', data.token);
-            setUser(data.user);
-            showToast('success', 'Вы успешно вошли в систему', 'Успешный вход');
-            navigate('/home');
+            console.log('Успешный вход, данные:', data);
+            console.log('Данные пользователя:', data.user);
+            
+            // Проверка наличия данных пользователя
+            if (!data || !data.user) {
+                console.error('Ошибка: не получены данные пользователя после авторизации');
+                showToast('error', 'Не удалось получить данные пользователя', 'Ошибка авторизации');
+                return;
+            }
+            
+            try {
+                // Сохраняем токен в localStorage
+                localStorage.setItem('token', data.token);
+                
+                // Явно преобразуем данные пользователя в объект User
+                const user = {
+                    id: data.user.id,
+                    nickname: data.user.nickname,
+                    bio: data.user.bio || '',
+                    avatar_url: data.user.avatar_url || null,
+                    birth_date: data.user.birth_date || '',
+                    lastSeen: data.user.lastSeen || '',
+                    isOnline: data.user.isOnline || false
+                };
+                
+                // Устанавливаем пользователя в контекст
+                console.log('Устанавливаем пользователя в контекст:', user);
+                setUser(user);
+                
+                // Сохраняем пользователя в localStorage для сохранения сеанса
+                localStorage.setItem('user', JSON.stringify(user));
+                
+                showToast('success', 'Вы успешно вошли в систему', 'Успешный вход');
+                
+                // Перенаправляем на домашнюю страницу через таймаут,
+                // чтобы дать контексту время на обновление
+                console.log('Пытаемся перенаправить на /home');
+                setTimeout(() => {
+                    navigate('/home');
+                    console.log('Перенаправление должно быть выполнено');
+                }, 500); // Увеличиваем задержку до 500 мс
+            } catch (error) {
+                console.error('Ошибка при обработке данных авторизации:', error);
+                showToast('error', 'Произошла ошибка при обработке данных', 'Ошибка авторизации');
+            }
         },
         onError: (error: any) => {
             if (error.response?.data?.error) {

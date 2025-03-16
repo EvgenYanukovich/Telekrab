@@ -13,15 +13,17 @@ export interface RegisterCredentials {
     avatar?: File | FileList;
 }
 
+export interface User {
+    id: number;
+    nickname: string;
+    avatar_url?: string | null;
+    birth_date?: string;
+    bio?: string;
+    isOnline?: boolean;
+    lastSeen?: string;
+}
+
 export interface AuthResponse {
     token: string;
-    user: {
-        id: number;
-        nickname: string;
-        bio?: string;
-        avatarPath?: string;
-        isPrivate: boolean;
-        lastSeen: string;
-        isOnline: boolean;
-    };
+    user: User;
 }

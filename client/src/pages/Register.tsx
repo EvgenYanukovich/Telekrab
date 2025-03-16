@@ -25,9 +25,14 @@ export const Register: React.FC = () => {
     const registerMutation = useMutation({
         mutationFn: registerUser,
         onSuccess: (data) => {
+            // Сохраняем токен в localStorage
             localStorage.setItem('token', data.token);
+            // Устанавливаем пользователя в контекст
             setUser(data.user);
+            // Сохраняем пользователя в localStorage для сохранения сеанса
+            localStorage.setItem('user', JSON.stringify(data.user));
             showToast('success', 'Ваш аккаунт успешно создан!', 'Регистрация завершена');
+            // Перенаправляем на домашнюю страницу
             navigate('/home');
         },
         onError: (error: any) => {

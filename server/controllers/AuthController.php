@@ -57,7 +57,7 @@ class AuthController {
             'user' => [
                 'id' => $user['id'],
                 'nickname' => $user['nickname'],
-                'avatar_url' => $user['avatar_url'],
+                'avatar_url' => isset($user['avatar_url']) ? $user['avatar_url'] : null,
                 'birth_date' => $user['birth_date'],
                 'bio' => $user['bio']
             ]
@@ -124,7 +124,7 @@ class AuthController {
             'user' => [
                 'id' => $user['id'],
                 'nickname' => $user['nickname'],
-                'avatar_url' => $user['avatar_url'],
+                'avatar_url' => isset($user['avatar_url']) ? $user['avatar_url'] : null,
                 'birth_date' => $user['birth_date'],
                 'bio' => $user['bio']
             ]

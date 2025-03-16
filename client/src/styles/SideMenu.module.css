@@ -1,0 +1,146 @@
+/* Стили для бокового меню */
+.side_menu {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 300px;
+    height: 100vh;
+    background: rgba(30, 30, 50, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    transition: left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.side_menu_open {
+    left: 0;
+}
+
+.side_menu_header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem;
+}
+
+.close_button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.user_profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile_avatar {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar_image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar_placeholder_large {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #4a69bd, #6c5ce7);
+    border-radius: 50%;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.profile_info {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.profile_name {
+    margin: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.profile_bio {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.edit_profile_button {
+    background: rgba(79, 99, 242, 0.3);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.edit_profile_button:hover {
+    background: rgba(79, 99, 242, 0.5);
+}
+
+.logout_button {
+    margin-top: 0.5rem;
+    background: rgba(255, 60, 60, 0.3);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logout_button:hover {
+    background: rgba(255, 60, 60, 0.5);
+}
+
+.menu_items {
+    flex: 1;
+    padding: 1rem;
+}
+
+.menu_item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.menu_item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.menu_item_icon {
+    margin-right: 1rem;
+    font-size: 1.2rem;
+}
+
+.menu_item_name {
+    font-weight: 500;
+}

@@ -26,7 +26,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const calendarRef = useRef<HTMLDivElement | null>(null);
 
-    // Создаем портал при монтировании компонента
     useEffect(() => {
         calendarRef.current = document.createElement('div');
         calendarRef.current.style.position = 'absolute';
@@ -39,10 +38,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         };
     }, []);
     
-    // Обрабатываем клики вне календаря
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            // Проверяем, не кликнули ли внутри контейнера или календаря
             const isClickInsideContainer = containerRef.current && containerRef.current.contains(event.target as Node);
             const isClickInsideCalendar = calendarRef.current && calendarRef.current.contains(event.target as Node);
             
@@ -52,7 +49,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             }
         };
         
-        // Останавливаем всплытие события для кликов в календаре
         const handleCalendarClick = (e: Event) => {
             e.stopPropagation();
         };
@@ -61,12 +57,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             document.addEventListener('mousedown', handleClickOutside);
             calendarRef.current.addEventListener('click', handleCalendarClick);
             
-            // Добавляем календарь в DOM, если он еще не добавлен
             if (!document.body.contains(calendarRef.current)) {
                 document.body.appendChild(calendarRef.current);
             }
             
-            // Обновляем позицию календаря
             updateCalendarPosition();
         }
         
@@ -78,7 +72,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         };
     }, [isOpen, onBlur]);
     
-    // Обновляем позицию календаря при изменении размера окна
     useEffect(() => {
         const handleResize = () => {
             if (isOpen) {
@@ -95,7 +88,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         };
     }, [isOpen]);
     
-    // Функция обновления позиции календаря
     const updateCalendarPosition = () => {
         if (!calendarRef.current || !containerRef.current) return;
         
@@ -145,11 +137,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         setIsOpen(false);
     };
     
-    // Обработчик для очистки выбранной даты
     const handleClearDate = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Предотвращаем открытие календаря
+        e.stopPropagation();
         setSelectedDate(null);
-        onChange(''); // Отправляем пустую строку как значение
+        onChange(''); 
     };
 
     const months = [
@@ -219,7 +210,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         const daysInMonth = getDaysInMonth(month, year);
         const firstDay = getFirstDayOfMonth(month, year);
         
-        // Добавляем шапку с месяцем и годом
         days.push(
             <div key="header" className={styles.calendar_header}>
                 <button 
@@ -267,7 +257,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             </div>
         );
         
-        // Добавляем дни недели
         days.push(
             <div key="weekdays" className={styles.weekdays}>
                 <div>Пн</div>
@@ -280,10 +269,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             </div>
         );
         
-        // Корректируем воскресенье (0) на 7 для правильного отображения
         const adjustedFirstDay = firstDay === 0 ? 7 : firstDay;
         
-        // Создаем пустые ячейки для дней до начала месяца
         const blanks = [];
         for (let i = 1; i < adjustedFirstDay; i++) {
             blanks.push(
@@ -291,10 +278,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             );
         }
         
-        // Создаем ячейки для дней месяца
         const monthDays = [];
         for (let d = 1; d <= daysInMonth; d++) {
-            const date = new Date(year, month, d);
+            // const date = new Date(year, month, d);
             const isSelected = selectedDate && 
                               selectedDate.getDate() === d && 
                               selectedDate.getMonth() === month && 

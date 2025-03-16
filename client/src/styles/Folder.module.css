@@ -1,0 +1,75 @@
+/* Стили для папок */
+.folder_list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+    height: 100%;
+    gap: 1rem;
+}
+
+.folder_item {
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+}
+
+.folder_svg_container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.folder_svg_icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.folder_active .folder_svg_icon {
+    color: white;
+}
+
+.folder_item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.folder_active {
+    background: rgba(79, 99, 242, 0.5);
+}
+
+.folder_active:hover {
+    background: rgba(79, 99, 242, 0.7);
+}
+
+.folder_icon {
+    font-size: 1.5rem;
+}
+
+.folder_tooltip {
+    position: absolute;
+    left: 4rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.folder_item:hover .folder_tooltip {
+    opacity: 1;
+    visibility: visible;
+}

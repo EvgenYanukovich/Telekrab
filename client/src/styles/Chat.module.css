@@ -1,0 +1,183 @@
+/* Стили для чата */
+.chat_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat_user_info {
+    display: flex;
+    align-items: center;
+}
+
+.chat_avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    margin-right: 0.7rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat_user_details {
+    display: flex;
+    flex-direction: column;
+}
+
+.chat_user_name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.chat_user_status {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.chat_actions {
+    display: flex;
+    gap: 0.7rem;
+}
+
+.icon_button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.icon_button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.messages_container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    overflow-y: auto;
+    gap: 0.5rem;
+}
+
+.message {
+    max-width: 70%;
+    padding: 0.7rem 1rem;
+    border-radius: 1rem;
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.message_own {
+    align-self: flex-end;
+    background-color: rgba(79, 99, 242, 0.3);
+    border-bottom-right-radius: 0.3rem;
+}
+
+.message_other {
+    align-self: flex-start;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-bottom-left-radius: 0.3rem;
+}
+
+.message_content {
+    margin-bottom: 0.4rem;
+    word-wrap: break-word;
+}
+
+.message_info {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.message_time {
+    margin-right: 0.3rem;
+}
+
+.message_status {
+    color: #4f63f2;
+}
+
+.message_edited {
+    margin-left: 0.3rem;
+    font-style: italic;
+}
+
+.message_input_container {
+    display: flex;
+    align-items: center;
+    padding: 0.7rem 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 0.5rem;
+}
+
+.message_input {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    border-radius: 1.5rem;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 0.95rem;
+    resize: none;
+    min-height: 1.5rem;
+    max-height: 5rem;
+}
+
+.input_action_button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.input_action_button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.send_button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.send_button_active {
+    color: #4f63f2;
+}
+
+.send_button_active:hover {
+    background: rgba(79, 99, 242, 0.2);
+}

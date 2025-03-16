@@ -10,8 +10,49 @@ const axiosInstance = axios.create({
 
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
-        const response = await axiosInstance.post<AuthResponse>('/auth/login', credentials);
-        return response.data;
+        const response = await axiosInstance.post('/auth/login', credentials);
+        
+        // Проверяем, что ответ содержит необходимые данные
+        console.log('Ответ сервера при входе:', response.data);
+        
+        // Обрабатываем различные форматы ответа
+        let data: AuthResponse;
+        
+        if (typeof response.data === 'string') {
+            // Если в ответе есть HTML с ошибкой PHP, пытаемся извлечь JSON из этого ответа
+            if (response.data.includes('{') && response.data.includes('}')) {
+                const jsonStartIndex = response.data.indexOf('{');
+                const jsonEndIndex = response.data.lastIndexOf('}') + 1;
+                const jsonStr = response.data.substring(jsonStartIndex, jsonEndIndex);
+                
+                try {
+                    const extractedData = JSON.parse(jsonStr);
+                    console.log('Извлеченные данные из HTML-ответа:', extractedData);
+                    
+                    if (extractedData.token && extractedData.user) {
+                        data = extractedData;
+                    } else {
+                        throw new Error('В извлеченных данных отсутствуют необходимые поля');
+                    }
+                } catch (e) {
+                    console.error('Не удалось извлечь JSON из HTML-ответа:', e);
+                    throw new Error('Неверный формат данных в ответе сервера');
+                }
+            } else {
+                throw new Error('Ответ сервера не содержит JSON данных');
+            }
+        } else {
+            // Если ответ уже объект, используем его напрямую
+            data = response.data;
+            
+            // Проверяем наличие необходимых полей
+            if (!data.token || !data.user) {
+                console.error('Ответ сервера не содержит token или user:', data);
+                throw new Error('В ответе сервера отсутствуют необходимые данные');
+            }
+        }
+        
+        return data;
     } catch (error) {
         console.error('Login error:', error);
         throw error;
