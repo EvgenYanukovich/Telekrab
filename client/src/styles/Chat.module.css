@@ -1,4 +1,11 @@
 /* Стили для чата */
+.chat_container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
 .chat_header {
     display: flex;
     justify-content: space-between;
@@ -71,6 +78,7 @@
     padding: 1rem;
     overflow-y: auto;
     gap: 0.5rem;
+    margin-bottom: 0;
 }
 
 .message {
@@ -100,10 +108,18 @@
 
 .message_info {
     display: flex;
+    flex-direction: row-reverse;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.7);
+    margin-top: 0.3rem;
+}
+
+.message_meta {
+    display: flex;
+    align-items: center;
+
 }
 
 .message_time {
@@ -125,6 +141,11 @@
     padding: 0.7rem 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     gap: 0.5rem;
+    background-color: var(--bg-secondary);
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    min-height: 60px;
 }
 
 .message_input {
@@ -180,4 +201,389 @@
 
 .send_button_active:hover {
     background: rgba(79, 99, 242, 0.2);
+}
+
+/* Стили для реакций на сообщения */
+.message_reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.reaction {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 0.15rem 0.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 0.3rem;
+}
+
+.reaction:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.reaction_own {
+    background-color: rgba(79, 99, 242, 0.2);
+}
+
+.reaction_own:hover {
+    background-color: rgba(79, 99, 242, 0.3);
+}
+
+.reaction_emoji {
+    font-size: 0.9rem;
+    margin-right: 0.1rem;
+}
+
+.reaction_count {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-left: 0.15rem;
+}
+
+/* Панель выбора эмодзи для реакций */
+.reaction_picker {
+    position: absolute;
+    z-index: 10;
+    top: -40px;
+    left: 0;
+    background-color: #2a2a2a;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+    padding: 0.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reaction_emoji_list {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.reaction_emoji_item {
+    font-size: 1.2rem;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.reaction_emoji_item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Стили для кнопки эмодзи */
+.emoji_button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.emoji_button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Стили для контекстного меню */
+.context_menu {
+    position: absolute;
+    background-color: #2C303D;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.4);
+    padding: 0.5rem;
+    z-index: 1000;
+    min-width: 150px;
+    animation: fadeIn 0.15s ease-in-out;
+}
+
+/* Для своих сообщений (справа) */
+.message_own .context_menu {
+    right: 100%;
+    top: 0;
+    margin-right: 10px;
+}
+
+/* Для чужих сообщений (слева) */
+.message_other .context_menu {
+    left: 100%;
+    top: 0;
+    margin-left: 10px;
+}
+
+.context_menu::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+/* Для своих сообщений (стрелка справа) */
+.message_own .context_menu::before {
+    right: -8px;
+    top: 15px;
+    border-width: 8px 0 8px 8px;
+    border-color: transparent transparent transparent #2C303D;
+}
+
+/* Для чужих сообщений (стрелка слева) */
+.message_other .context_menu::before {
+    left: -8px;
+    top: 15px;
+    border-width: 8px 8px 8px 0;
+    border-color: transparent #2C303D transparent transparent;
+}
+
+.context_menu_item {
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    transition: background-color 0.2s;
+    border-radius: 0.3rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.context_menu_item:hover {
+    background-color: rgba(79, 99, 242, 0.2);
+}
+
+.context_menu_icon {
+    font-size: 1.2rem;
+    width: 1.2rem;
+    text-align: center;
+}
+
+/* Стили для закрепленного сообщения */
+.pinned_message_container {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+}
+
+.pinned_message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 100%;
+}
+
+.pin_icon {
+    color: rgba(255, 255, 255, 0.7);
+    margin-right: 0.5rem;
+}
+
+.pinned_message_content {
+    flex: 1;
+    overflow: hidden;
+    margin-right: 0.5rem;
+}
+
+.pinned_message_sender {
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+}
+
+.pinned_message_text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.unpin_button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.unpin_button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Стили для ответа на сообщение */
+.reply_container {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-left: 2px solid #4f63f2;
+    padding: 0.3rem 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.reply_info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.reply_sender {
+    font-weight: 500;
+    color: #4f63f2;
+    font-size: 0.85rem;
+}
+
+.reply_text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.reply_input_container {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(79, 99, 242, 0.05);
+}
+
+.reply_preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+}
+
+.reply_preview_content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+}
+
+.reply_to {
+    font-size: 0.85rem;
+    color: #4f63f2;
+}
+
+.reply_preview_text {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reply_cancel_button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.reply_cancel_button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Стили для редактирования сообщения */
+.edit_message_container {
+    width: 100%;
+}
+
+.edit_message_input {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    color: white;
+    resize: vertical;
+    min-height: 4rem;
+    margin-bottom: 0.5rem;
+}
+
+.edit_buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.edit_save_button, 
+.edit_cancel_button {
+    padding: 0.3rem 0.8rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.edit_save_button {
+    background-color: #4f63f2;
+    color: white;
+}
+
+.edit_save_button:hover {
+    background-color: #3a4cce;
+}
+
+.edit_cancel_button {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.edit_cancel_button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.message_pinned {
+    margin-left: 0.3rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Стили для кнопок ввода */
+.input_action_button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.input_action_button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }

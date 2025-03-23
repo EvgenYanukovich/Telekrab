@@ -37,8 +37,19 @@ class AuthMiddleware {
         $headers = getallheaders();
         $token = null;
 
+        // Отладочная информация
+        error_log('Полученные заголовки: ' . json_encode($headers));
+
         if (isset($headers['Authorization'])) {
             $token = str_replace('Bearer ', '', $headers['Authorization']);
+            error_log('Токен извлечен из заголовка Authorization: ' . substr($token, 0, 10) . '...');
+        } else if (isset($headers['authorization'])) {
+            // Проверяем с маленькой буквы (некоторые прокси или сервера могут менять регистр)
+            $token = str_replace('Bearer ', '', $headers['authorization']);
+            error_log('Токен извлечен из заголовка authorization (нижний регистр): ' . substr($token, 0, 10) . '...');
+        } else {
+            // Проверяем все заголовки на наличие поля Authorization
+            error_log('Заголовок Authorization не найден. Доступные заголовки: ' . implode(', ', array_keys($headers)));
         }
 
         if (!$token) {
@@ -48,8 +59,11 @@ class AuthMiddleware {
         }
 
         try {
-            return JWT::verify($token);
+            $decoded = JWT::verify($token);
+            error_log('Токен успешно проверен. Пользователь ID: ' . ($decoded['user_id'] ?? 'не указан'));
+            return $decoded;
         } catch (Exception $e) {
+            error_log('Ошибка при проверке токена: ' . $e->getMessage());
             http_response_code(401);
             echo json_encode(['error' => 'Invalid token']);
             exit;

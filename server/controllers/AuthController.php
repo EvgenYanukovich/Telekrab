@@ -205,24 +205,8 @@ class AuthController {
     }
 
     private function generateJWT($payload) {
-        $secretKey = 'your_secret_key_here';
-        $header = [
-            'typ' => 'JWT',
-            'alg' => 'HS256'
-        ];
-
-        $headerJson = json_encode($header);
-        $headerBase64 = base64_encode($headerJson);
-
-        $payloadJson = json_encode($payload);
-        $payloadBase64 = base64_encode($payloadJson);
-
-        $signature = hash_hmac('sha256', $headerBase64 . '.' . $payloadBase64, $secretKey, true);
-        $signatureBase64 = base64_encode($signature);
-
-        $jwt = $headerBase64 . '.' . $payloadBase64 . '.' . $signatureBase64;
-
-        return $jwt;
+        // Используем готовый класс JWT вместо собственной реализации
+        return JWT::generate($payload);
     }
 
     private function saveAvatarFile($file) {
