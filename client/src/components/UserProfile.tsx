@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styles from '../styles/UserProfile.module.css';
 import { ProfileEditForm } from './ProfileEditForm';
+import { ContactEditForm } from './ContactEditForm';
 
 interface UserData {
     id: number;
@@ -14,6 +15,7 @@ interface UserData {
     registrationDate?: string;
     isOnline?: boolean;
     last_seen?: string;
+    original_nickname?: string; 
 }
 
 interface UserProfileProps {
@@ -61,13 +63,16 @@ const UserProfile: React.FC<UserProfileProps> = ({
         setIsEditMode(false);
     };
 
+    // Определяем, это собственный профиль или контакт
+    const isOwnProfile = !!onLogout; // Если есть onLogout, значит это собственный профиль
+
     return (
         <div className={styles.modal_overlay} onClick={handleOverlayClick}>
             <div className={styles.modal_container} onClick={e => e.stopPropagation()}>
                 <div className={styles.modal_header}>
                     <button className={styles.close_button} onClick={onClose}>←</button>
                     <h2 className={styles.modal_title}>
-                        {isEditMode ? 'Редактирование' : 'Профиль'}
+                        {isEditMode ? (isOwnProfile ? 'Редактирование' : 'Редактирование') : 'Профиль'}
                     </h2>
                     {!isEditMode && (
                         <button 
@@ -81,18 +86,28 @@ const UserProfile: React.FC<UserProfileProps> = ({
                 
                 <div className={styles.modal_content}>
                     {isEditMode ? (
-                        // Форма редактирования профиля
-                        <ProfileEditForm 
-                            userData={{
-                                id: contact.id,
-                                nickname: contact.name,
-                                bio: contact.bio || '',
-                                birth_date: contact.registrationDate || '',
-                                avatar_url: contact.avatar?.replace('https://api.telekrab.org/', '')
-                            }}
-                            onCancel={handleCancelEdit}
-                            onSuccess={handleUpdateSuccess}
-                        />
+                        isOwnProfile ? (
+                            // Форма редактирования собственного профиля
+                            <ProfileEditForm 
+                                userData={{
+                                    id: contact.id,
+                                    nickname: contact.name,
+                                    bio: contact.bio || '',
+                                    birth_date: contact.registrationDate || '',
+                                    avatar_url: contact.avatar?.replace('https://api.telekrab.org/', '')
+                                }}
+                                onCancel={handleCancelEdit}
+                                onSuccess={handleUpdateSuccess}
+                            />
+                        ) : (
+                            // Форма редактирования контакта (только никнейм)
+                            <ContactEditForm
+                                contactId={contact.id}
+                                currentNickname={contact.name}
+                                onCancel={handleCancelEdit}
+                                onSuccess={handleUpdateSuccess}
+                            />
+                        )
                     ) : (
                         // Просмотр профиля
                         <>
@@ -126,6 +141,17 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     </div>
                                 )}
                                 
+                                {/* Отображаем оригинальный никнейм, если он отличается от текущего */}
+                                {contact.isAdded && contact.original_nickname && contact.name !== contact.original_nickname && (
+                                    <div className={styles.info_item}>
+                                        <div className={styles.info_icon}>😇</div>
+                                        <div className={styles.info_content}>
+                                            <div className={styles.info_value}>{contact.original_nickname}</div>
+                                            <div className={styles.info_label}>Оригинальный никнейм</div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {contact.bio && (
                                     <div className={styles.info_item}>
                                         <div className={styles.info_icon}>ℹ️</div>
@@ -139,10 +165,12 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                 <div className={styles.info_item}>
                                     <div className={styles.info_icon}>@</div>
                                     <div className={styles.info_content}>
-                                        <div className={styles.info_value}>@{contact.username}</div>
-                                        <div className={styles.info_label}>Имя пользователя</div>
+                                        <div className={styles.info_value}>{contact.id}</div>
+                                        <div className={styles.info_label}>ID пользователя</div>
                                     </div>
                                 </div>
+                                
+                                
                                 
                                 {contact.registrationDate && (
                                     <div className={styles.info_item}>
