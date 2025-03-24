@@ -154,34 +154,27 @@ class UserController {
             echo json_encode(['error' => 'Не удалось обновить профиль. Пожалуйста, попробуйте позже.']);
         }
     }
-    
-    private function saveAvatarFile($avatar) {
-        // Создаем имя файла на основе текущей даты и времени
-        $dateTime = new \DateTime();
-        $timestamp = $dateTime->format('d-m-Y-H-i-s');
+
+    private function saveAvatarFile($file) {
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
         
-        // Получаем расширение файла
-        $fileExtension = pathinfo($avatar['name'], PATHINFO_EXTENSION);
-        
-        // Формируем имя файла
-        $filename = $timestamp . '.' . $fileExtension;
-        
-        // Директория для сохранения изображений
-        $uploadDir = __DIR__ . '/../images/';
-        
-        // Проверяем существование директории, создаем если не существует
-        if (!is_dir($uploadDir)) {
+        if (!in_array($file['type'], $allowedTypes)) {
+            return false;
+        }
+
+        $uploadDir = __DIR__ . '/../uploads/avatars/';
+        if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
-        
-        $uploadFile = $uploadDir . $filename;
-        
-        // Сохраняем файл
-        if (move_uploaded_file($avatar['tmp_name'], $uploadFile)) {
-            // Возвращаем относительный путь для хранения в БД и доступа через API
-            return 'images/' . $filename;
-        } else {
-            return null;
+
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $fileName = uniqid('avatar_') . '.' . $extension;
+        $targetPath = $uploadDir . $fileName;
+
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            return false;
         }
+
+        return '/uploads/avatars/' . $fileName;
     }
 }

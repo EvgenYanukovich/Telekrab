@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import styles from '../styles/ChatList.module.css';
+import ChatContextMenu, { Chat as ChatType } from './ChatContextMenu';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { addChatToFolder, removeChatFromFolder } from '../api/folders';
 
 interface Chat {
     id: number;
@@ -11,11 +14,44 @@ interface Chat {
     isPinned: boolean;
     isOnline: boolean;
     type?: 'personal' | 'group' | 'channel';
+    folderId?: number;
 }
 
 export const ChatList: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeChat, setActiveChat] = useState<number>(1); // Устанавливаем первый чат как активный по умолчанию
+    const [contextMenu, setContextMenu] = useState<{
+        visible: boolean;
+        position: { x: number; y: number };
+        chatId: number;
+    }>({
+        visible: false,
+        position: { x: 0, y: 0 },
+        chatId: 0
+    });
+    
+    const queryClient = useQueryClient();
+    
+    // Мутации для работы с папками
+    const addToFolderMutation = useMutation({
+        mutationFn: ({ chatId, folderId }: { chatId: number; folderId: number }) => 
+            addChatToFolder(folderId, chatId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['chats'] });
+            queryClient.invalidateQueries({ queryKey: ['folderChats'] });
+        }
+    });
+    
+    const removeFromFolderMutation = useMutation({
+        mutationFn: ({ chatId, folderId }: { chatId: number; folderId?: number }) => {
+            if (folderId === undefined) return Promise.resolve();
+            return removeChatFromFolder(folderId, chatId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['chats'] });
+            queryClient.invalidateQueries({ queryKey: ['folderChats'] });
+        }
+    });
     
     // Хардкодные данные для демонстрации
     const chats: Chat[] = [
@@ -28,7 +64,8 @@ export const ChatList: React.FC = () => {
             unreadCount: 2,
             isPinned: true,
             isOnline: true,
-            type: 'personal'
+            type: 'personal',
+            folderId: 0 // Все чаты
         },
         {
             id: 2,
@@ -50,7 +87,8 @@ export const ChatList: React.FC = () => {
             unreadCount: 5,
             isPinned: false,
             isOnline: false,
-            type: 'group'
+            type: 'group',
+            folderId: 1 // Предположим, что это папка "Работа"
         },
         {
             id: 4,
@@ -92,6 +130,69 @@ export const ChatList: React.FC = () => {
     const handleChatClick = (chatId: number) => {
         setActiveChat(chatId);
     };
+    
+    // Обработчик правого клика для открытия контекстного меню
+    const handleContextMenu = (event: React.MouseEvent, chatId: number) => {
+        event.preventDefault();
+        
+        // Получаем DOM элемент чата
+        const chatElement = event.currentTarget as HTMLElement;
+        const chatRect = chatElement.getBoundingClientRect();
+        
+        // Позиционируем меню справа от чата на той же высоте, где находится курсор
+        setContextMenu({
+            visible: true,
+            position: { 
+                x: chatRect.right + 5, // 5px отступ от чата
+                y: event.clientY 
+            },
+            chatId
+        });
+    };
+    
+    // Закрытие контекстного меню
+    const closeContextMenu = () => {
+        setContextMenu(prev => ({ ...prev, visible: false }));
+    };
+    
+    // Обработчик закрепления/открепления чата
+    const handlePinToggle = (chatId: number, pin: boolean) => {
+        // В реальном приложении здесь будет API-вызов
+        console.log(`${pin ? 'Закрепление' : 'Откреплениe'} чата ${chatId}`);
+        // Обновляем список чатов в UI
+        // В реальном приложении это должен делать query-client после успешного запроса к API
+    };
+    
+    // Обработчик добавления чата в папку
+    const handleAddToFolder = (chatId: number, folderId: number) => {
+        addToFolderMutation.mutate({ chatId, folderId });
+    };
+    
+    // Обработчик удаления чата из папки
+    const handleRemoveFromFolder = (chatId: number, folderId?: number) => {
+        removeFromFolderMutation.mutate({ chatId, folderId });
+    };
+    
+    // Обработчик удаления чата
+    const handleDeleteChat = (chatId: number) => {
+        // В реальном приложении здесь будет API-вызов
+        console.log(`Удаление чата ${chatId}`);
+        // Обновляем список чатов в UI
+        // В реальном приложении это должен делать query-client после успешного запроса к API
+    };
+    
+    // Получаем текущий чат для контекстного меню
+    const getCurrentChatForContextMenu = (): ChatType | null => {
+        const chat = chats.find(c => c.id === contextMenu.chatId);
+        if (!chat) return null;
+        
+        return {
+            id: chat.id,
+            name: chat.name,
+            isPinned: chat.isPinned,
+            folderId: chat.folderId
+        };
+    };
 
     return (
         <>
@@ -112,6 +213,7 @@ export const ChatList: React.FC = () => {
                         key={chat.id} 
                         className={`${styles.chat_item} ${activeChat === chat.id ? styles.chat_item_active : ''}`}
                         onClick={() => handleChatClick(chat.id)}
+                        onContextMenu={(e) => handleContextMenu(e, chat.id)}
                     >
                         <div className={styles.chat_avatar}>
                             {chat.avatarPath ? (
@@ -145,6 +247,19 @@ export const ChatList: React.FC = () => {
                     </div>
                 ))}
             </div>
+            
+            {/* Контекстное меню */}
+            {contextMenu.visible && (
+                <ChatContextMenu 
+                    chat={getCurrentChatForContextMenu()!}
+                    position={contextMenu.position}
+                    onClose={closeContextMenu}
+                    onPin={handlePinToggle}
+                    onAddToFolder={handleAddToFolder}
+                    onRemoveFromFolder={handleRemoveFromFolder}
+                    onDelete={handleDeleteChat}
+                />
+            )}
         </>
     );
 };

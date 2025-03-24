@@ -1,0 +1,279 @@
+/* Основные стили модального окна */
+.modal_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal_container {
+    background-color: #1e283c;
+    width: 450px;
+    max-width: 90%;
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal_title {
+    color: white;
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.close_button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    transition: color 0.2s;
+}
+
+.close_button:hover {
+    color: white;
+}
+
+.modal_content {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Стили для списка папок */
+.folders_list {
+    margin-bottom: 30px;
+}
+
+.folders_list h3 {
+    color: white;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.folder_items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.folder_item {
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: background-color 0.2s;
+}
+
+.folder_item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.folder_display {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.folder_icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    color: white;
+    margin-right: 12px;
+    font-size: 1rem;
+}
+
+.folder_name {
+    flex: 1;
+    color: white;
+    font-size: 0.95rem;
+}
+
+.folder_actions {
+    display: flex;
+    align-items: center;
+}
+
+.edit_button, .delete_button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 5px;
+    margin-left: 5px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.edit_button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.delete_button:hover {
+    background-color: rgba(224, 67, 54, 0.2);
+    color: #e74c3c;
+}
+
+/* Стили для формы редактирования */
+.edit_form {
+    width: 100%;
+}
+
+.folder_input {
+    width: 100%;
+    padding: 10px 12px;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: white;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
+
+.folder_input:focus {
+    outline: none;
+    border-color: rgba(33, 150, 243, 0.5);
+}
+
+.edit_actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.save_button, .cancel_button {
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: none;
+}
+
+.save_button {
+    background-color: #2196F3;
+    color: white;
+    margin-right: 8px;
+}
+
+.save_button:hover {
+    background-color: #1976D2;
+}
+
+.save_button:disabled {
+    background-color: rgba(33, 150, 243, 0.5);
+    cursor: not-allowed;
+}
+
+.cancel_button {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cancel_button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Стили для создания папки */
+.create_folder h3 {
+    color: white;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.create_form {
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.create_button {
+    padding: 10px 15px;
+    width: 100%;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 15px;
+}
+
+.create_button:hover {
+    background-color: #1976D2;
+}
+
+.create_button:disabled {
+    background-color: rgba(33, 150, 243, 0.5);
+    cursor: not-allowed;
+}
+
+/* Стили для выбора цвета */
+.color_picker {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.color_option {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.color_option:hover {
+    transform: scale(1.1);
+}
+
+.color_selected {
+    border: 2px solid white;
+}
+
+/* Стили для состояний загрузки и ошибки */
+.loading, .error {
+    padding: 15px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.error {
+    color: #e74c3c;
+}

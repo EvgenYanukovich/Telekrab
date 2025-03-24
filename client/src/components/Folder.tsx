@@ -1,12 +1,8 @@
 import { useState } from 'react';
 import styles from '../styles/Folder.module.css';
-
-interface FolderItem {
-    id: number;
-    name: string;
-    iconType: string;
-    isSystem?: boolean;
-}
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getUserFolders } from '../api/folders';
+import FolderManagement, { Folder as FolderType } from './FolderManagement';
 
 interface FolderProps {
     onMenuClick?: () => void;
@@ -14,24 +10,75 @@ interface FolderProps {
 
 export const Folder: React.FC<FolderProps> = ({ onMenuClick }) => {
     const [activeFolder, setActiveFolder] = useState<number>(1);
+    const [isFolderManagementOpen, setIsFolderManagementOpen] = useState(false);
+    
+    const queryClient = useQueryClient();
+    
+    // Запрос на получение папок с сервера
+    const foldersQuery = useQuery({
+        queryKey: ['folders'],
+        queryFn: getUserFolders,
+        staleTime: 1000 * 60 * 5, // Считаем данные актуальными в течение 5 минут
+        refetchOnWindowFocus: false
+    });
+    
+    // Обработчик открытия/закрытия модального окна управления папками
+    const toggleFolderManagement = () => {
+        setIsFolderManagementOpen(!isFolderManagementOpen);
+    };
+    
+    // Обработчик закрытия модального окна управления папками
+    const closeFolderManagement = () => {
+        setIsFolderManagementOpen(false);
+        
+        // Обновляем список папок после закрытия модального окна
+        queryClient.invalidateQueries({ queryKey: ['folders'] });
+    };
 
-    // Хардкодные данные для демонстрации
-    const folders: FolderItem[] = [
-        { id: 0, name: 'Меню', iconType: 'menu', isSystem: true },
-        { id: 1, name: 'Все чаты', iconType: 'chat', isSystem: true },
-        { id: 2, name: 'Работа', iconType: 'folder' },
-        { id: 3, name: 'Учеба', iconType: 'folder' },
-        { id: 4, name: 'Друзья', iconType: 'folder' },
-        { id: 5, name: 'Настройки', iconType: 'settings', isSystem: true },
-    ];
+    // Объединение системных и пользовательских папок
+    const getAllFolders = (): FolderType[] => {
+        const userFolders = foldersQuery.data || [];
+        
+        // Системные папки
+        const systemFolders: FolderType[] = [
+            { 
+                folder_id: -1, 
+                name: 'Меню', 
+                icon: 'menu', 
+                color: '#2196F3', 
+                position: 0,
+                isSystem: true 
+            },
+            { 
+                folder_id: 0, 
+                name: 'Все чаты', 
+                icon: 'chat', 
+                color: '#2196F3', 
+                position: 1,
+                isSystem: true 
+            },
+        ];
+        
+        // Добавляем специальный элемент для управления папками
+        const folderSettings: FolderType = { 
+            folder_id: -2, 
+            name: 'Управление папками', 
+            icon: 'settings', 
+            color: '#607D8B', 
+            position: userFolders.length + 2,
+            isSystem: true 
+        };
+        
+        return [...systemFolders, ...userFolders, folderSettings];
+    };
 
     const handleFolderClick = (folderId: number) => {
-        if (folderId === 0) { // Клик на меню
+        if (folderId === -1) { // Клик на меню
             if (onMenuClick) {
                 onMenuClick();
             }
-        } else if (folderId === 5) { // Клик на настройки
-            // Здесь будет обработка клика на настройки
+        } else if (folderId === -2) { // Клик на настройки папок
+            toggleFolderManagement();
         } else { // Клик на обычную папку
             setActiveFolder(folderId);
         }
@@ -53,39 +100,66 @@ export const Folder: React.FC<FolderProps> = ({ onMenuClick }) => {
     };
 
     // Рендер SVG-иконки
-    const renderIcon = (iconType: string) => {
-        const path = getIconPath(iconType);
+    const renderIcon = (folder: FolderType) => {
+        const { icon, color, name } = folder;
         
-        if (iconType === 'menu' || iconType === 'settings') {
+        // Для специальных иконок (меню, настройки)
+        if (icon === 'menu' || icon === 'settings') {
             return (
                 <svg viewBox="0 0 24 24" width="24" height="24" className={styles.folder_svg_icon}>
-                    <path d={path} fill="currentColor" />
+                    <path d={getIconPath(icon)} fill="currentColor" />
                 </svg>
             );
         }
         
-        // Для стандартных иконок используем импорт из файла
+        // Для системной иконки "Все чаты"
+        if (icon === 'chat') {
+            return (
+                <div className={styles.folder_svg_container}>
+                    <svg className={styles.folder_svg_icon}>
+                        <use xlinkHref={getIconPath(icon)} />
+                    </svg>
+                </div>
+            );
+        }
+        
+        // Для обычных папок рендерим круг с первой буквой названия
         return (
-            <div className={styles.folder_svg_container}>
-                <svg className={styles.folder_svg_icon}>
-                    <use xlinkHref={path} />
-                </svg>
+            <div 
+                className={styles.folder_icon} 
+                style={{ backgroundColor: color || '#2196F3' }}
+            >
+                {name.substring(0, 1).toUpperCase()}
             </div>
         );
     };
 
     return (
-        <div className={styles.folder_list}>
-            {folders.map(folder => (
-                <div 
-                    key={folder.id} 
-                    className={`${styles.folder_item} ${activeFolder === folder.id ? styles.folder_active : ''}`}
-                    onClick={() => handleFolderClick(folder.id)}
-                >
-                    {renderIcon(folder.iconType)}
-                    {folder.name && <div className={styles.folder_tooltip}>{folder.name}</div>}
-                </div>
-            ))}
-        </div>
+        <>
+            <div className={styles.folder_list}>
+                {foldersQuery.isPending ? (
+                    <div className={styles.folder_loading}>Загрузка...</div>
+                ) : foldersQuery.isError ? (
+                    <div className={styles.folder_error}>Ошибка</div>
+                ) : (
+                    getAllFolders().map(folder => (
+                        <div 
+                            key={folder.folder_id} 
+                            className={`${styles.folder_item} ${activeFolder === folder.folder_id ? styles.folder_active : ''}`}
+                            onClick={() => handleFolderClick(folder.folder_id)}
+                        >
+                            {renderIcon(folder)}
+                            {folder.name && <div className={styles.folder_tooltip}>{folder.name}</div>}
+                        </div>
+                    ))
+                )}
+            </div>
+            
+            {/* Модальное окно управления папками */}
+            <FolderManagement 
+                isOpen={isFolderManagementOpen} 
+                onClose={closeFolderManagement} 
+            />
+        </>
     );
 };

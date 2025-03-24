@@ -1,0 +1,101 @@
+.context_menu {
+    position: fixed;
+    min-width: 180px;
+    background-color: #1e283c;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 9999; /* Очень высокий z-index, чтобы отображаться поверх всех элементов */
+    overflow: hidden;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.menu_list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu_item {
+    padding: 10px 15px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    position: relative;
+}
+
+.menu_item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.delete_item {
+    color: #ff5252;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.delete_item:hover {
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.submenu {
+    position: relative;
+}
+
+.submenu:after {
+    content: "›";
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.submenu_list {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    background-color: #1e283c;
+    min-width: 160px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    list-style: none;
+    padding: 5px 0;
+    margin: 0;
+    display: none;
+    z-index: 1001;
+}
+
+.submenu:hover .submenu_list {
+    display: block;
+}
+
+.submenu_item {
+    padding: 8px 15px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.submenu_item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.disabled {
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+}
+
+.disabled:hover {
+    background-color: transparent;
+}

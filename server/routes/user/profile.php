@@ -1,7 +1,7 @@
 <?php
 
-require_once __DIR__ . '/../controllers/UserController.php';
-require_once __DIR__ . '/../middleware/AuthMiddleware.php';
+require_once __DIR__ . '/../../controllers/UserController.php';
+require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
 
 // Обрабатываем CORS
 AuthMiddleware::handleCORS();
