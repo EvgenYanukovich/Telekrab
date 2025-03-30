@@ -53,13 +53,20 @@ const createFolder = async (name: string, color: string, icon: string = ''): Pro
     return response.data;
 };
 
-const updateFolder = async (id: number, name: string, color: string, icon?: string): Promise<Folder> => {
-    const data: Record<string, any> = { name, color };
-    if (icon !== undefined) {
-        data.icon = icon;
+const updateFolder = async (data: { id: number, name: string, color: string, icon?: string }): Promise<Folder> => {
+    // Формируем данные для отправки
+    const updateData: Record<string, any> = { 
+        name: data.name, 
+        color: data.color 
+    };
+    
+    // Добавляем иконку, если она указана
+    if (data.icon !== undefined) {
+        updateData.icon = data.icon;
     }
     
-    const response = await api.put(`/folder/update?id=${id}`, data);
+    // Отправляем запрос: ID в query string, данные в теле запроса
+    const response = await api.put(`/folder/update?id=${data.id}`, updateData);
     return response.data;
 };
 
@@ -101,8 +108,8 @@ const FolderManagement: React.FC<FolderManagementProps> = ({ isOpen, onClose }) 
     
     // Мутация для обновления папки
     const updateFolderMutation = useMutation({
-        mutationFn: (folderData: { id: number, name: string, color: string }) => 
-            updateFolder(folderData.id, folderData.name, folderData.color),
+        mutationFn: (folderData: { id: number, name: string, color: string, icon?: string }) => 
+            updateFolder(folderData),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['folders'] });
             setEditingFolder(null);
@@ -133,7 +140,8 @@ const FolderManagement: React.FC<FolderManagementProps> = ({ isOpen, onClose }) 
             updateFolderMutation.mutate({
                 id: editingFolder.folder_id,
                 name: editingFolder.name,
-                color: editingFolder.color
+                color: editingFolder.color,
+                icon: editingFolder.icon
             });
         }
     };

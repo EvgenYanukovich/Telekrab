@@ -2,6 +2,17 @@
 require_once '../../models/Database.php';
 require_once '../../models/Folder.php';
 require_once '../../utils/auth.php';
+require_once '../../utils/cors.php'; // Подключаем настройки CORS
+
+// Включаем отображение ошибок для отладки
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Если это предварительный запрос OPTIONS, CORS уже обработал его
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit;
+}
 
 // Проверка авторизации
 $user = authenticate();
@@ -21,8 +32,23 @@ if (!$folderId) {
     exit;
 }
 
-// Получение данных из запроса
-$data = json_decode(file_get_contents('php://input'), true);
+// Проверка метода запроса
+$requestMethod = $_SERVER['REQUEST_METHOD'];
+error_log("Метод запроса: $requestMethod");
+
+// Получение данных в зависимости от метода запроса
+if ($requestMethod === 'PUT') {
+    // Для PUT берем данные из тела запроса
+    $inputData = file_get_contents('php://input');
+    error_log("Входящие данные: $inputData");
+    $data = json_decode($inputData, true);
+} else {
+    // Для других методов берем из $_POST
+    $data = $_POST;
+}
+
+// Логируем полученные данные
+error_log("Данные после обработки: " . json_encode($data));
 
 // Проверка наличия данных для обновления
 if (empty($data)) {

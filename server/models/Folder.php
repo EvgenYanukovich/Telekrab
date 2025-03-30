@@ -104,104 +104,92 @@ class Folder {
     }
     
     /**
-     * Обновление папки
-     * 
-     * @param int $folderId ID папки
-     * @param int $userId ID пользователя (для проверки доступа)
-     * @param array $data Данные для обновления (name, icon, color)
-     * @return bool Успешно ли обновлена папка
-     */
-    public function updateFolder(int $folderId, int $userId, array $data): bool {
-        try {
-            $updateFields = [];
-            $params = [];
-            
-            // Формируем список полей для обновления
-            if (isset($data['name'])) {
-                $updateFields[] = "folder_name = ?";
-                $params[] = $data['name'];
-            }
-            
-            if (isset($data['icon'])) {
-                $updateFields[] = "icon = ?";
-                $params[] = $data['icon'];
-            }
-            
-            if (isset($data['color'])) {
-                $updateFields[] = "color = ?";
-                $params[] = $data['color'];
-            }
-            
-            if (isset($data['position'])) {
-                $updateFields[] = "position = ?";
-                $params[] = $data['position'];
-            }
-            
-            if (empty($updateFields)) {
-                return true; // Нечего обновлять
-            }
-            
-            // Добавляем параметры для условия WHERE
-            $params[] = $folderId;
-            $params[] = $userId;
-            
-            $sql = "
-                UPDATE user_folders 
-                SET " . implode(", ", $updateFields) . "
-                WHERE id = ? AND user_id = ?
-            ";
-            
-            $stmt = $this->db->prepare($sql);
-            $result = $stmt->execute($params);
-            
-            return $result && $stmt->rowCount() > 0;
-        } catch (PDOException $e) {
-            error_log('Ошибка при обновлении папки: ' . $e->getMessage());
-            return false;
+ * Обновление папки
+ * 
+ * @param int $folderId ID папки
+ * @param int $userId ID пользователя (для проверки доступа)
+ * @param array $data Данные для обновления (name, icon, color)
+ * @return bool Успешно ли обновлена папка
+ */
+public function updateFolder(int $folderId, int $userId, array $data): bool {
+    try {
+        $updateFields = [];
+        $params = [];
+        
+        // Формируем список полей для обновления
+        if (isset($data['name'])) {
+            $updateFields[] = "folder_name = ?";
+            $params[] = $data['name'];
         }
+        
+        if (isset($data['icon'])) {
+            $updateFields[] = "icon = ?";
+            $params[] = $data['icon'];
+        }
+        
+        if (isset($data['color'])) {
+            $updateFields[] = "color = ?";
+            $params[] = $data['color'];
+        }
+        
+        if (isset($data['position'])) {
+            $updateFields[] = "position = ?";
+            $params[] = $data['position'];
+        }
+        
+        if (empty($updateFields)) {
+            return true; // Нечего обновлять
+        }
+        
+        // Добавляем параметры для условия WHERE
+        $params[] = $folderId;
+        $params[] = $userId;
+        
+        $sql = "
+            UPDATE user_folders 
+            SET " . implode(", ", $updateFields) . "
+            WHERE id = ? AND user_id = ?
+        ";
+        
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->execute($params);
+        
+        return $result && $stmt->rowCount() > 0;
+    } catch (PDOException $e) {
+        error_log('Ошибка при обновлении папки: ' . $e->getMessage());
+        return false;
     }
+}
     
     /**
-     * Удаление папки
-     * 
-     * @param int $folderId ID папки
-     * @param int $userId ID пользователя (для проверки доступа)
-     * @return bool Успешно ли удалена папка
-     */
-    public function deleteFolder(int $folderId, int $userId): bool {
-        try {
-            $this->db->beginTransaction();
-            
-            // Удаляем связи папки с чатами
-            $chatLinkSql = "DELETE FROM user_folders WHERE id = ? AND user_id = ?";
-            $chatLinkStmt = $this->db->prepare($chatLinkSql);
-            $chatLinkStmt->execute([$folderId, $userId]);
-            
-            // Удаляем саму папку
-            $sql = "DELETE FROM user_folders WHERE id = ? AND user_id = ?";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([$folderId, $userId]);
-            
-            // Перенумеровываем позиции оставшихся папок
-            $reorderSql = "
-                SET @pos = 0;
-                UPDATE user_folders 
-                SET position = (@pos := @pos + 1) 
-                WHERE user_id = ? 
-                ORDER BY position ASC
-            ";
-            $reorderStmt = $this->db->prepare($reorderSql);
-            $reorderStmt->execute([$userId]);
-            
-            $this->db->commit();
-            
-            return true;
-        } catch (PDOException $e) {
-            $this->db->rollBack();
-            error_log('Ошибка при удалении папки: ' . $e->getMessage());
-            return false;
-        }
+ * Удаление папки
+ * 
+ * @param int $folderId ID папки
+ * @param int $userId ID пользователя (для проверки доступа)
+ * @return bool Успешно ли удалена папка
+ */
+public function deleteFolder(int $folderId, int $userId): bool {
+    try {
+        // Логируем входящие данные для отладки
+        error_log("Попытка удаления папки. Folder ID: $folderId, User ID: $userId");
+        
+        // Удаляем папку только если она принадлежит пользователю
+        $sql = "DELETE FROM user_folders WHERE id = ? AND user_id = ?";
+        
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->execute([$folderId, $userId]);
+        
+        // Логируем результат выполнения запроса
+        error_log("Результат удаления: " . ($result ? 'success' : 'failed'));
+        error_log("Количество удаленных строк: " . $stmt->rowCount());
+        
+        // Возвращаем true, если удалена хотя бы одна строка
+        return $result && $stmt->rowCount() > 0;
+    } catch (PDOException $e) {
+        error_log('Ошибка при удалении папки: ' . $e->getMessage());
+        return false;
     }
+}
     
     /**
      * Добавление чата в папку
