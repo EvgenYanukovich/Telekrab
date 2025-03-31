@@ -24,17 +24,58 @@ if (!isset($data['folder_id']) || !isset($data['chat_id'])) {
 
 $folderId = (int)$data['folder_id'];
 $chatId = (int)$data['chat_id'];
+$userId = (int)$user['user_id'];
 
-// Удаление чата из папки
-$folder = new Folder();
-$result = $folder->removeChatFromFolder($folderId, $chatId, $user['user_id']);
-
-if (!$result) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Не удалось удалить чат из папки']);
+try {
+    $db = Database::getInstance();
+    
+    // Проверяем, является ли пользователь участником чата
+    $checkMemberSql = "SELECT * FROM chat_members WHERE chat_id = ? AND user_id = ?";
+    $checkMemberStmt = $db->prepare($checkMemberSql);
+    $checkMemberStmt->execute([$chatId, $userId]);
+    $chatMember = $checkMemberStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$chatMember) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Вы не являетесь участником этого чата']);
+        exit;
+    }
+    
+    // Получаем текущие папки чата
+    $currentFolders = $chatMember['folders'] ? json_decode($chatMember['folders'], true) : [];
+    
+    // Проверяем, есть ли папка в списке
+    $folderKey = array_search((string)$folderId, $currentFolders);
+    
+    if ($folderKey === false) {
+        // Чат не находится в этой папке
+        http_response_code(400);
+        echo json_encode(['error' => 'Чат не находится в этой папке']);
+        exit;
+    }
+    
+    // Удаляем ID папки из массива
+    unset($currentFolders[$folderKey]);
+    
+    // Переиндексируем массив
+    $currentFolders = array_values($currentFolders);
+    
+    // Обновляем запись в БД
+    $updateSql = "UPDATE chat_members SET folders = ? WHERE chat_id = ? AND user_id = ?";
+    $updateStmt = $db->prepare($updateSql);
+    $updateStmt->execute([json_encode($currentFolders), $chatId, $userId]);
+    
+    // Возвращаем успешный ответ
+    http_response_code(200);
+    echo json_encode([
+        'success' => true, 
+        'message' => 'Чат успешно удален из папки',
+        'folders' => $currentFolders
+    ]);
+    
+} catch (PDOException $e) {
+    error_log('Ошибка при удалении чата из папки: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => 'Ошибка сервера при удалении чата из папки']);
     exit;
 }
-
-// Возвращаем успешный ответ
-header('Content-Type: application/json');
-echo json_encode(['success' => true, 'message' => 'Чат успешно удален из папки']);

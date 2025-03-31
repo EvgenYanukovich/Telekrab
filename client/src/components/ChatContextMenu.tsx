@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from '../styles/ChatContextMenu.module.css';
 import { useQuery } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ export interface Chat {
     name: string;
     isPinned: boolean;
     folderId?: number;
+    folders?: string[];
 }
 
 interface ChatContextMenuProps {
@@ -19,6 +20,7 @@ interface ChatContextMenuProps {
     onAddToFolder: (chatId: number, folderId: number) => void;
     onRemoveFromFolder: (chatId: number, folderId?: number) => void;
     onDelete: (chatId: number) => void;
+    currentFolderId?: number;
 }
 
 const ChatContextMenu: React.FC<ChatContextMenuProps> = ({
@@ -28,15 +30,30 @@ const ChatContextMenu: React.FC<ChatContextMenuProps> = ({
     onPin,
     onAddToFolder,
     onRemoveFromFolder,
-    onDelete
+    onDelete,
+    currentFolderId
 }) => {
     const menuRef = useRef<HTMLDivElement>(null);
+    const [isFolderSubmenuOpen, setIsFolderSubmenuOpen] = useState(false);
     
     // Запрос на получение папок
     const { data: folders = [] } = useQuery({
         queryKey: ['folders'],
         queryFn: getUserFolders
     });
+    
+    // Проверяем, находится ли чат в папке
+    const isChatInFolder = (folderId: number): boolean => {
+        // Если есть массив folders, проверяем наличие folderId
+        if (chat.folders) {
+            return chat.folders.includes(folderId.toString());
+        }
+        // Если нет массива, проверяем folderId чата
+        if (chat.folderId !== undefined) {
+            return chat.folderId === folderId;
+        }
+        return false;
+    };
     
     // Хэндлер для закрепления/открепления чата
     const handlePinToggle = () => {
@@ -60,7 +77,13 @@ const ChatContextMenu: React.FC<ChatContextMenuProps> = ({
     
     // Хэндлер для удаления чата из папки
     const handleRemoveFromFolder = () => {
-        onRemoveFromFolder(chat.id, chat.folderId);
+        // Если мы в текущей папке, используем currentFolderId
+        if (currentFolderId && currentFolderId !== 0) {
+            onRemoveFromFolder(chat.id, currentFolderId);
+        } else if (chat.folderId) {
+            // Иначе используем folderId чата
+            onRemoveFromFolder(chat.id, chat.folderId);
+        }
         onClose();
     };
     
@@ -83,6 +106,12 @@ const ChatContextMenu: React.FC<ChatContextMenuProps> = ({
         top: `${position.y}px`,
         left: `${position.x}px`,
     };
+
+    // Тоггл для открытия/закрытия подменю папок
+    const toggleFolderSubmenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsFolderSubmenuOpen(!isFolderSubmenuOpen);
+    };
     
     // Рендерим через портал в конец body
     return createPortal(
@@ -93,34 +122,46 @@ const ChatContextMenu: React.FC<ChatContextMenuProps> = ({
                 </li>
                 
                 {/* Подменю для добавления в папку */}
-                <li className={styles.menu_item + ' ' + styles.submenu}>
-                    <span>Добавить в папку</span>
-                    <ul className={styles.submenu_list}>
-                        {folders.map(folder => (
-                            <li 
-                                key={folder.folder_id} 
-                                className={styles.submenu_item}
-                                onClick={() => handleAddToFolder(folder.folder_id)}
-                            >
-                                {folder.name}
-                            </li>
-                        ))}
-                        {folders.length === 0 && (
-                            <li className={styles.submenu_item + ' ' + styles.disabled}>
-                                Нет доступных папок
-                            </li>
-                        )}
-                    </ul>
+                <li className={styles.menu_item} onClick={toggleFolderSubmenu}>
+                    <span>Добавить в папку {isFolderSubmenuOpen ? '▼' : '▶'}</span>
+                    {isFolderSubmenuOpen && (
+                        <div className={styles.dropdown_submenu}>
+                            {folders.map(folder => {
+                                // Проверяем, находится ли чат в этой папке
+                                const isInFolder = isChatInFolder(folder.folder_id);
+                                
+                                return (
+                                    <div 
+                                        key={folder.folder_id} 
+                                        className={`${styles.submenu_item} ${isInFolder ? styles.disabled : ''}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!isInFolder) {
+                                                handleAddToFolder(folder.folder_id);
+                                            }
+                                        }}
+                                    >
+                                        {folder.name} {isInFolder && '(уже в папке)'}
+                                    </div>
+                                );
+                            })}
+                            {folders.length === 0 && (
+                                <div className={`${styles.submenu_item} ${styles.disabled}`}>
+                                    Нет доступных папок
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </li>
                 
                 {/* Опция удаления из папки доступна только если чат уже в папке */}
-                {chat.folderId !== undefined && chat.folderId !== 0 && (
+                {currentFolderId !== undefined && currentFolderId !== 0 && isChatInFolder(currentFolderId) && (
                     <li className={styles.menu_item} onClick={handleRemoveFromFolder}>
-                        Удалить из папки
+                        Удалить из текущей папки
                     </li>
                 )}
                 
-                <li className={styles.menu_item + ' ' + styles.delete_item} onClick={handleDelete}>
+                <li className={`${styles.menu_item} ${styles.delete_item}`} onClick={handleDelete}>
                     Удалить чат
                 </li>
             </ul>

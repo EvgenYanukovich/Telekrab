@@ -10,12 +10,14 @@ import {
     deleteChat as apiDeleteChat,
     getContactsWithoutChat,
     createChat as apiCreateChat,
-    Contact
+    Contact,
+    Chat 
 } from '../api/chats';
 
-export const ChatList: React.FC = () => {
+export const ChatList: React.FC<{ selectedFolderId?: number }> = ({ selectedFolderId = 0 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeChat, setActiveChat] = useState<number | null>(null); 
+    const [currentFolderId, setCurrentFolderId] = useState<number>(selectedFolderId); 
     const [contextMenu, setContextMenu] = useState<{
         visible: boolean;
         position: { x: number; y: number };
@@ -27,83 +29,83 @@ export const ChatList: React.FC = () => {
     const queryClient = useQueryClient();
     
     // Получение чатов через API
-    const { data: chats = [], isLoading: isChatsLoading } = useQuery({
-        queryKey: ['chats'],
-        queryFn: getUserChats
+    const { data: chats = [], isLoading: isChatsLoading } = useQuery<Chat[]>({
+        queryKey: ['chats', currentFolderId],
+        queryFn: () => getUserChats(currentFolderId)
     });
     
     // Получение контактов без чатов
     const { data: contactsWithoutChat = [], isLoading: isContactsLoading, isError: isContactsError } = useQuery<Contact[]>({
         queryKey: ['contactsWithoutChat'],
         queryFn: getContactsWithoutChat,
-        // Активируем запрос только когда нужно показать контакты
         enabled: showContactsWithoutChat,
         retry: 1
     });
     
-    // Исправляем ошибку типизации и добавляем обработку ошибок с использованием useEffect
     useEffect(() => {
         if (isContactsError) {
             setShowContactsWithoutChat(false);
         }
     }, [isContactsError]);
     
+    useEffect(() => {
+        if (selectedFolderId !== currentFolderId) {
+            setCurrentFolderId(selectedFolderId);
+            queryClient.invalidateQueries({ queryKey: ['chats', selectedFolderId] });
+        }
+    }, [selectedFolderId, currentFolderId, queryClient]);
+    
     // Мутации для работы с чатами
-    const pinChatMutation = useMutation({
+    const togglePinMutation = useMutation({
         mutationFn: ({ chatId, isPinned }: { chatId: number; isPinned: boolean }) => 
-            toggleChatPin(chatId, isPinned),
+            toggleChatPin(chatId, isPinned, currentFolderId),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['chats'] });
+            queryClient.invalidateQueries({ queryKey: ['chats', currentFolderId] });
         }
     });
     
     const deleteChatMutation = useMutation({
         mutationFn: (chatId: number) => apiDeleteChat(chatId),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['chats'] });
+            queryClient.invalidateQueries({ queryKey: ['chats', currentFolderId] });
         }
     });
     
     const createChatMutation = useMutation({
         mutationFn: (contactId: number) => apiCreateChat(contactId),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['chats'] });
-            // Скрываем список контактов после создания чата
+            queryClient.invalidateQueries({ queryKey: ['chats', currentFolderId] });
             setShowContactsWithoutChat(false);
         }
     });
     
     // Мутации для работы с папками
-    const addToFolderMutation = useMutation({
+    const addChatToFolderMutation = useMutation({
         mutationFn: ({ chatId, folderId }: { chatId: number; folderId: number }) => 
             addChatToFolder(folderId, chatId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['chats'] });
-            queryClient.invalidateQueries({ queryKey: ['folderChats'] });
         }
     });
     
-    const removeFromFolderMutation = useMutation({
-        mutationFn: ({ chatId, folderId }: { chatId: number; folderId?: number }) => {
-            if (folderId === undefined) return Promise.resolve();
-            return removeChatFromFolder(folderId, chatId);
-        },
+    const removeChatFromFolderMutation = useMutation({
+        mutationFn: ({ chatId, folderId }: { chatId: number; folderId: number }) => 
+            removeChatFromFolder(folderId, chatId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['chats'] });
-            queryClient.invalidateQueries({ queryKey: ['folderChats'] });
         }
     });
     
     // Поиск чатов
     const handleSearch = async () => {
         if (searchQuery.trim() === '') {
-            queryClient.invalidateQueries({ queryKey: ['chats'] });
+            queryClient.invalidateQueries({ queryKey: ['chats', currentFolderId] });
             return;
         }
         
         try {
             const foundChats = await searchChats(searchQuery);
-            queryClient.setQueryData(['chats'], foundChats);
+            queryClient.setQueryData(['chats', currentFolderId], foundChats);
         } catch (error) {
             console.error('Ошибка при поиске чатов:', error);
         }
@@ -131,10 +133,8 @@ export const ChatList: React.FC = () => {
             const result = await createChatMutation.mutateAsync(contactId);
             
             if (result && result.id) {
-                // Обновляем список чатов и активируем новый чат
-                queryClient.invalidateQueries({ queryKey: ['chats'] });
+                queryClient.invalidateQueries({ queryKey: ['chats', currentFolderId] });
                 setActiveChat(result.id);
-                // Скрываем список контактов после создания чата
                 setShowContactsWithoutChat(false);
             }
         } catch (error) {
@@ -146,15 +146,13 @@ export const ChatList: React.FC = () => {
     const handleContextMenu = (event: React.MouseEvent, chatId: number) => {
         event.preventDefault();
         
-        // Получаем DOM элемент чата
         const chatElement = event.currentTarget as HTMLElement;
         const chatRect = chatElement.getBoundingClientRect();
         
-        // Позиционируем меню справа от чата на той же высоте, где находится курсор
         setContextMenu({
             visible: true,
             position: { 
-                x: chatRect.right + 5, // 5px отступ от чата
+                x: chatRect.right + 5, 
                 y: event.clientY 
             },
             chatId
@@ -168,17 +166,21 @@ export const ChatList: React.FC = () => {
     
     // Обработчик закрепления/открепления чата
     const handlePinToggle = (chatId: number, pin: boolean) => {
-        pinChatMutation.mutate({ chatId, isPinned: pin });
+        togglePinMutation.mutate({ chatId, isPinned: pin });
     };
     
     // Обработчик добавления чата в папку
     const handleAddToFolder = (chatId: number, folderId: number) => {
-        addToFolderMutation.mutate({ chatId, folderId });
+        console.log(`Добавление чата ${chatId} в папку ${folderId}`);
+        addChatToFolderMutation.mutate({ chatId, folderId });
     };
     
     // Обработчик удаления чата из папки
     const handleRemoveFromFolder = (chatId: number, folderId?: number) => {
-        removeFromFolderMutation.mutate({ chatId, folderId });
+        if (folderId === undefined) return;
+        
+        console.log(`Удаление чата ${chatId} из папки ${folderId}`);
+        removeChatFromFolderMutation.mutate({ chatId, folderId });
     };
     
     // Обработчик удаления чата
@@ -195,7 +197,8 @@ export const ChatList: React.FC = () => {
             id: chat.id,
             name: chat.name,
             isPinned: chat.isPinned,
-            folderId: chat.folderId
+            folderId: currentFolderId === 0 ? undefined : currentFolderId,
+            folders: chat.folders
         };
     };
 
@@ -223,7 +226,6 @@ export const ChatList: React.FC = () => {
                 {isChatsLoading || isContactsLoading ? (
                     <div className={styles.loading}>Загрузка...</div>
                 ) : showContactsWithoutChat ? (
-                    // Показываем контакты без чатов
                     Array.isArray(contactsWithoutChat) && contactsWithoutChat.length > 0 ? (
                         contactsWithoutChat.map((contact: Contact, index) => (
                             <div 
@@ -259,7 +261,6 @@ export const ChatList: React.FC = () => {
                         </div>
                     )
                 ) : (
-                    // Показываем список чатов
                     sortedChats.length > 0 ? (
                         sortedChats.map((chat, index) => (
                             <div 
@@ -307,16 +308,16 @@ export const ChatList: React.FC = () => {
                 )}
             </div>
             
-            {/* Контекстное меню */}
             {contextMenu.visible && (
                 <ChatContextMenu 
                     chat={getCurrentChatForContextMenu()!}
-                    position={contextMenu.position}
-                    onClose={closeContextMenu}
+                    position={contextMenu.position} 
+                    onClose={closeContextMenu} 
                     onPin={handlePinToggle}
                     onAddToFolder={handleAddToFolder}
                     onRemoveFromFolder={handleRemoveFromFolder}
                     onDelete={handleDeleteChat}
+                    currentFolderId={currentFolderId}
                 />
             )}
         </>

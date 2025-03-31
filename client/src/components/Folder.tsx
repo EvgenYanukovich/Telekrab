@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from '../styles/Folder.module.css';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUserFolders } from '../api/folders';
@@ -6,13 +6,23 @@ import FolderManagement, { Folder as FolderType } from './FolderManagement';
 
 interface FolderProps {
     onMenuClick?: () => void;
+    onFolderSelect?: (folderId: number) => void; // Добавляем свойство для уведомления о выборе папки
+    activeFolderId?: number; // Добавляем свойство для активной папки
 }
 
-export const Folder: React.FC<FolderProps> = ({ onMenuClick }) => {
-    const [activeFolder, setActiveFolder] = useState<number>(1);
+export const Folder: React.FC<FolderProps> = ({ onMenuClick, onFolderSelect, activeFolderId = 0 }) => {
+    // Используем activeFolderId из свойств или 0 по умолчанию
+    const [activeFolder, setActiveFolder] = useState<number>(activeFolderId);
     const [isFolderManagementOpen, setIsFolderManagementOpen] = useState(false);
     
     const queryClient = useQueryClient();
+    
+    // Синхронизируем внутреннее состояние с пропсом activeFolderId
+    useEffect(() => {
+        if (activeFolderId !== undefined && activeFolderId !== activeFolder) {
+            setActiveFolder(activeFolderId);
+        }
+    }, [activeFolderId]);
     
     // Запрос на получение папок с сервера
     const foldersQuery = useQuery({
@@ -49,14 +59,6 @@ export const Folder: React.FC<FolderProps> = ({ onMenuClick }) => {
                 position: 0,
                 isSystem: true 
             },
-            { 
-                folder_id: -100, 
-                name: 'Все чаты', 
-                icon: 'chat', 
-                color: '#2196F3', 
-                position: 1,
-                isSystem: true 
-            },
         ];
         
         // Добавляем специальный элемент для управления папками
@@ -81,6 +83,9 @@ export const Folder: React.FC<FolderProps> = ({ onMenuClick }) => {
             toggleFolderManagement();
         } else { // Клик на обычную папку
             setActiveFolder(folderId);
+            if (onFolderSelect) {
+                onFolderSelect(folderId);
+            }
         }
     };
 

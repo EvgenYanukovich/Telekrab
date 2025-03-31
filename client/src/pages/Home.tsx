@@ -13,6 +13,7 @@ import { SideMenu } from '../components/SideMenu';
 export const Home: React.FC = () => {
     const [showEmoji, setShowEmoji] = useState(false);
     const [sideMenuOpen, setSideMenuOpen] = useState(false);
+    const [currentFolderId, setCurrentFolderId] = useState<number>(0); // Добавляем состояние для текущей папки (по умолчанию "Все чаты" - ID 0)
     const [insertEmojiFunction, setInsertEmojiFunction] = useState<((emoji: string) => void) | null>(null);
     
     // Получаем функцию вставки эмодзи из компонента Chat
@@ -34,15 +35,25 @@ export const Home: React.FC = () => {
     const handleToggleSideMenu = () => {
         setSideMenuOpen(!sideMenuOpen);
     };
+    
+    // Обработчик переключения папки
+    const handleFolderChange = (folderId: number) => {
+        console.log(`Переключение на папку с ID: ${folderId}`);
+        setCurrentFolderId(folderId);
+    };
 
     return (
         <div className={styles.container}>
             <div className={styles.components_container}>
                 <div className={`${styles.folder_container} ${folderStyles.folder_container}`}>
-                    <Folder onMenuClick={handleToggleSideMenu} />
+                    <Folder 
+                        onMenuClick={handleToggleSideMenu} 
+                        onFolderSelect={handleFolderChange}
+                        activeFolderId={currentFolderId}
+                    />
                 </div>
                 <div className={`${styles.contacts_container} ${chatListStyles.contacts_container}`}>
-                    <ChatList />
+                    <ChatList selectedFolderId={currentFolderId} />
                 </div>
                 <div className={`${styles.chat_container} ${chatStyles.chat_container}`}>
                     <Chat 
@@ -57,7 +68,6 @@ export const Home: React.FC = () => {
                     </div>
                 )}
             </div>
-
             {sideMenuOpen && (
                 <SideMenu 
                     isOpen={sideMenuOpen} 

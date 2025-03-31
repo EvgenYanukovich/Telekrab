@@ -32,6 +32,7 @@ export interface Chat {
     isOnline: boolean;
     type?: 'personal' | 'group' | 'channel';
     folderId?: number;
+    folders?: string[]; // Массив ID папок, в которых находится чат
 }
 
 export interface Contact {
@@ -45,11 +46,30 @@ export interface Contact {
 
 /**
  * Получение всех чатов пользователя
+ * @param folderId ID папки для фильтрации (по умолчанию 0 - "Все чаты")
  */
-export const getUserChats = async (): Promise<Chat[]> => {
+export const getUserChats = async (folderId: number = 0): Promise<Chat[]> => {
     try {
-        const response = await api.get('/chats/all');
-        return response.data;
+        const response = await api.get('/chats/all', { params: { folder_id: folderId } });
+        
+        // Преобразуем данные с сервера в формат клиента
+        const chats = response.data.map((chat: any) => ({
+            id: Number(chat.id),
+            name: chat.name,
+            avatarPath: chat.avatar_path,
+            lastMessage: chat.last_message,
+            lastMessageTime: chat.last_message_time,
+            unreadCount: Number(chat.unread_count || 0),
+            isPinned: Boolean(Number(chat.is_pinned)), // Изменение преобразования в boolean
+            isOnline: Boolean(Number(chat.is_online)),
+            folderId: chat.folder_id ? Number(chat.folder_id) : undefined,
+            type: chat.type
+        }));
+        
+        console.log('Received chats from server:', response.data);
+        console.log('Transformed chats:', chats);
+        
+        return chats;
     } catch (error) {
         console.error('Ошибка при получении чатов:', error);
         return [];
@@ -89,10 +109,11 @@ export const getChatInfo = async (chatId: number): Promise<Chat | null> => {
  * Управление закреплением чата
  * @param chatId ID чата
  * @param isPinned Статус закрепления
+ * @param folderId ID папки, в которой происходит закрепление (по умолчанию 0 - "Все чаты")
  */
-export const toggleChatPin = async (chatId: number, isPinned: boolean): Promise<boolean> => {
+export const toggleChatPin = async (chatId: number, isPinned: boolean, folderId: number = 0): Promise<boolean> => {
     try {
-        const response = await api.post('/chats/pinned', { chat_id: chatId, is_pinned: isPinned });
+        const response = await api.post('/chat/toggle_pin', { chat_id: chatId, is_pinned: isPinned, folder_id: folderId });
         return response.data.success;
     } catch (error) {
         console.error(`Ошибка при ${isPinned ? 'закреплении' : 'откреплении'} чата:`, error);

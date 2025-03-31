@@ -31,13 +31,21 @@
     font-weight: bold;
     color: white;
     flex-shrink: 0;
+    overflow: hidden; /* Чтобы изображение не выходило за пределы круга */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Тень для объемности */
 }
 
-.chat_avatar svg {
+/* Стили для изображений аватарок */
+.chat_avatar img {
     width: 100%;
     height: 100%;
-    fill: currentColor;
-    color: rgba(255, 255, 255, 0.6);
+    object-fit: cover; /* Обрезка изображения с сохранением пропорций */
+    border-radius: 50%;
+    transition: transform 0.3s ease; /* Плавное увеличение при наведении */
+}
+
+.chat_avatar img:hover {
+    transform: scale(1.05); /* Небольшое увеличение при наведении */
 }
 
 .chat_info {
@@ -189,7 +197,8 @@
     padding: 0 20px;
 }
 
-/* Стили для аватаров */
+/* Улучшенный плейсхолдер для аватарок */
+/* Улучшенный плейсхолдер для аватарок */
 .avatar_placeholder {
     width: 100%;
     height: 100%;
@@ -201,13 +210,15 @@
     font-size: 1.2rem;
 }
 
+/* Индикатор онлайн-статуса */
 .online_indicator {
     position: absolute;
-    bottom: 0;
-    right: 0;
+    bottom: 2px;
+    right: 2px;
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background-color: #4ade80;
-    border: 2px solid #2e3440;
+    background-color: #4CAF50; /* Зеленый цвет для индикатора онлайн */
+    border: 2px solid #2E3440; /* Рамка в цвет фона для выделения */
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
 }

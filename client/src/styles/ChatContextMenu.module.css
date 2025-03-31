@@ -5,7 +5,7 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 9999; /* Очень высокий z-index, чтобы отображаться поверх всех элементов */
-    overflow: hidden;
+    overflow: visible; /* Изменено с overflow: hidden, чтобы подменю было видно */
     animation: fadeIn 0.15s ease-out;
 }
 
@@ -50,19 +50,21 @@
 
 .submenu {
     position: relative;
+    cursor: pointer;
 }
 
-.submenu:after {
+.submenu > span::after {
     content: "›";
     position: absolute;
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
+    font-size: 16px;
 }
 
 .submenu_list {
     position: absolute;
-    top: 0;
+    top: 0; /* Выравниваем с верхней частью родительского элемента */
     left: 100%;
     background-color: #1e283c;
     min-width: 160px;
@@ -72,11 +74,17 @@
     padding: 5px 0;
     margin: 0;
     display: none;
-    z-index: 1001;
+    z-index: 10000; /* Очень высокий z-index */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
 }
 
 .submenu:hover .submenu_list {
-    display: block;
+    display: block !important;
+    opacity: 1;
+    visibility: visible;
+    animation: fadeIn 0.15s ease-out;
 }
 
 .submenu_item {
@@ -89,6 +97,20 @@
 
 .submenu_item:hover {
     background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown_submenu {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    background-color: #1e283c;
+    min-width: 180px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 5px 0;
+    margin-top: 2px;
+    z-index: 10000;
+    animation: fadeIn 0.15s ease-out;
 }
 
 .disabled {

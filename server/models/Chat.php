@@ -41,15 +41,16 @@ class Chat {
                        (SELECT COUNT(*) FROM messages m 
                         JOIN message_interactions mi ON m.id = mi.message_id 
                         WHERE m.chat_id = c.id AND mi.user_id = ? AND mi.type = 'status' AND mi.value = 'unread') as unread_count,
-                       0 as is_pinned
+                       (SELECT COALESCE(uf.is_pinned, 0) FROM user_folders uf WHERE uf.user_id = ? AND uf.chat_id = c.id LIMIT 1) as is_pinned
                 FROM chats c
                 JOIN chat_members cm ON c.id = cm.chat_id
                 WHERE cm.user_id = ? AND cm.is_blocked = 0
                 ORDER BY 
-                         (SELECT m.created_at FROM messages m WHERE m.chat_id = c.id ORDER BY m.created_at DESC LIMIT 1) DESC";
+                        is_pinned DESC, 
+                        (SELECT m.created_at FROM messages m WHERE m.chat_id = c.id ORDER BY m.created_at DESC LIMIT 1) DESC";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$userId, $userId, $userId, $userId, $userId]);
+        $stmt->execute([$userId, $userId, $userId, $userId, $userId, $userId]);
         
         $chats = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
@@ -113,16 +114,17 @@ class Chat {
                        (SELECT COUNT(*) FROM messages m 
                         JOIN message_interactions mi ON m.id = mi.message_id 
                         WHERE m.chat_id = c.id AND mi.user_id = ? AND mi.type = 'status' AND mi.value = 'unread') as unread_count,
-                       0 as is_pinned
+                       (SELECT COALESCE(uf2.is_pinned, 0) FROM user_folders uf2 WHERE uf2.user_id = ? AND uf2.chat_id = c.id LIMIT 1) as is_pinned
                 FROM chats c
                 JOIN chat_members cm ON c.id = cm.chat_id
                 JOIN user_folders uf ON c.id = uf.chat_id AND uf.user_id = ? AND uf.folder_name = ?
                 WHERE cm.user_id = ? AND cm.is_blocked = 0
                 ORDER BY 
-                         (SELECT m.created_at FROM messages m WHERE m.chat_id = c.id ORDER BY m.created_at DESC LIMIT 1) DESC";
+                        is_pinned DESC,
+                        (SELECT m.created_at FROM messages m WHERE m.chat_id = c.id ORDER BY m.created_at DESC LIMIT 1) DESC";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$userId, $userId, $userId, $userId, $userId, $folderName, $userId]);
+        $stmt->execute([$userId, $userId, $userId, $userId, $userId, $userId, $folderName, $userId]);
         
         $chats = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
@@ -352,28 +354,7 @@ class Chat {
         
         return $chats;
     }
-
-    /**
-     * Устанавливает/снимает закрепление чата
-     * 
-     * @param int $chatId ID чата
-     * @param int $userId ID пользователя
-     * @param bool $isPinned Закрепить (true) или открепить (false)
-     * @return bool Успешно ли выполнена операция
-     */
-    public function toggleChatPin(int $chatId, int $userId, bool $isPinned): bool {
-        try {
-            $sql = "UPDATE user_folders SET pinned = ? WHERE user_id = ? AND chat_id = ?";
-            $stmt = $this->db->prepare($sql);
-            $pinValue = $isPinned ? 1 : 0;
-            $stmt->execute([$pinValue, $userId, $chatId]);
-            
-            return $stmt->rowCount() > 0;
-        } catch (Exception $e) {
-            error_log("Error toggling chat pin: " . $e->getMessage());
-            return false;
-        }
-    }
+    
 
     /**
      * Удаляет чат (для личных чатов просто удаляет пользователя из участников)
@@ -437,7 +418,7 @@ class Chat {
                 $folderStmt = $this->db->prepare($folderSql);
                 $folderStmt->execute([$chatId, $userId]);
             }
-            
+
             $this->db->commit();
             return true;
         } catch (Exception $e) {

@@ -43,7 +43,7 @@ RewriteRule ^folder/debug_table$ routes/folder/debug_table.php [L]
 # Chat routes
 RewriteRule ^chats/all$ routes/chat/all.php [L]
 RewriteRule ^chats/search$ routes/chat/search.php [L]
-RewriteRule ^chats/pinned$ routes/chat/pinned.php [L]
+RewriteRule ^chat/toggle_pin$ routes/chat/toggle_pin.php [L]
 RewriteRule ^chats/delete$ routes/chat/delete.php [L]
 RewriteRule ^chats/contacts$ routes/chat/contacts.php [L]
 RewriteRule ^chats/create$ routes/chat/create.php [L]
