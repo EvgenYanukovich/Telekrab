@@ -40,6 +40,16 @@ RewriteRule ^folder/delete$ routes/folder/delete.php [L]
 RewriteRule ^folder/chats$ routes/folder/chats.php [L]
 RewriteRule ^folder/debug_table$ routes/folder/debug_table.php [L]
 
+# Chat routes
+RewriteRule ^chats/all$ routes/chat/all.php [L]
+RewriteRule ^chats/search$ routes/chat/search.php [L]
+RewriteRule ^chats/pinned$ routes/chat/pinned.php [L]
+RewriteRule ^chats/delete$ routes/chat/delete.php [L]
+RewriteRule ^chats/contacts$ routes/chat/contacts.php [L]
+RewriteRule ^chats/create$ routes/chat/create.php [L]
+RewriteRule ^folder/chat/add$ routes/folder/chat/add.php [L]
+RewriteRule ^folder/chat/remove$ routes/folder/chat/remove.php [L]
+
 # Allow access to images and files
 RewriteRule ^images/(.*)$ images/$1 [L]
 RewriteRule ^files/(.*)$ files/$1 [L]

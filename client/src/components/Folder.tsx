@@ -50,7 +50,7 @@ export const Folder: React.FC<FolderProps> = ({ onMenuClick }) => {
                 isSystem: true 
             },
             { 
-                folder_id: 0, 
+                folder_id: -100, 
                 name: 'Все чаты', 
                 icon: 'chat', 
                 color: '#2196F3', 
